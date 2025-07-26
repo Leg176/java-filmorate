@@ -1,6 +1,5 @@
 package ru.yandex.practicum.filmorate.controller;
 
-
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,7 +27,6 @@ public class FilmController {
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        // проверяем выполнение необходимых условий
         log.info("Добавляем новый фильм {} в коллекцию.", film);
 
         log.trace("Проверка даты релиза фильма на соблюдение требования ТЗ");
@@ -36,7 +34,6 @@ public class FilmController {
             log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", film.getDuration());
             throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
         }
-        // формируем дополнительные данные
         log.trace("Присваиваем фильму уникальный id");
         film.setId(getNextId());
         // сохраняем новую публикацию в памяти приложения
@@ -81,7 +78,6 @@ public class FilmController {
                 oldFilm.setDuration(newFilm.getDuration());
             }
 
-            // если публикация найдена и все условия соблюдены, обновляем её содержимое
             log.info("Данные о фильме {} обновлены", oldFilm);
             return oldFilm;
         }

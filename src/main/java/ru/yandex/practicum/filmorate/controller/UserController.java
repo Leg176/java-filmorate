@@ -56,7 +56,6 @@ public class UserController {
 
     @PutMapping
     public User update(@Valid @RequestBody User newUser) {
-        // проверяем необходимые условия
         log.trace("Обновление данных о пользователе");
         if (newUser.getId() == null || newUser.getEmail().isBlank()) {
             log.warn("Поле id должно быть заполненно");
