@@ -12,7 +12,7 @@ import java.time.LocalDate;
  */
 
 @Data
-@EqualsAndHashCode(of = {"name"})
+@EqualsAndHashCode(of = {"id"})
 public class Film {
     private Long id;
     @NotBlank(message = "Название не может быть пустым")
@@ -24,7 +24,6 @@ public class Film {
     @NonNull
     @PastOrPresent
     private LocalDate releaseDate;
-    @NonNull
     @Min(value = 1, message = "Длительность фильма должна быть положительной")
     private int duration;
 }

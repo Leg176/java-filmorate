@@ -30,7 +30,7 @@ public class FilmController {
         log.info("Добавляем новый фильм {} в коллекцию.", film);
 
         log.trace("Проверка даты релиза фильма на соблюдение требования ТЗ");
-        if (!releaseDataFilm(film.getReleaseDate())) {
+        if (!checkReleaseDate(film.getReleaseDate())) {
             log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", film.getDuration());
             throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
         }
@@ -51,7 +51,7 @@ public class FilmController {
             throw new ValidationException("Id должен быть указан");
         }
 
-        if (newFilm.getReleaseDate() != null  && !releaseDataFilm(newFilm.getReleaseDate())) {
+        if (newFilm.getReleaseDate() != null  && !checkReleaseDate(newFilm.getReleaseDate())) {
             log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", newFilm.getDuration());
             throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
         }
@@ -71,7 +71,9 @@ public class FilmController {
             }
 
             log.trace("Обновляем дату выхода фильма.");
+            if (newFilm.getReleaseDate() != null) {
                 oldFilm.setReleaseDate(newFilm.getReleaseDate());
+            }
 
             log.trace("Обновляем продолжительность фильма.");
             if (newFilm.getDuration() > 0) {
@@ -97,7 +99,7 @@ public class FilmController {
         return ++currentMaxId;
     }
 
-    private boolean releaseDataFilm(LocalDate localDate) {
+    private boolean checkReleaseDate(LocalDate localDate) {
         log.debug("Проверяем дату выхода фильма");
         LocalDate firstFilmDate = LocalDate.of(1895, 12, 25);
         return localDate.isAfter(firstFilmDate);

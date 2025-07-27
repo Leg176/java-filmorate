@@ -30,12 +30,9 @@ public class UserController {
         boolean isContainEmail = users.values().stream()
                 .anyMatch(u -> u.getEmail().equals(user.getEmail()));
 
-        boolean isContainLogin = users.values().stream()
-                .anyMatch(u -> u.getLogin().equals(user.getLogin()));
-
-        if (isContainEmail || isContainLogin) {
-            log.warn("Имейл/логин используется другим пользователем");
-            throw new ValidationException("Имейл/логин используется другим пользователем");
+        if (isContainEmail) {
+            log.warn("Имейл используется другим пользователем");
+            throw new ValidationException("Имейл используется другим пользователем");
         }
 
         log.trace("Проверка имени пользователя требованиям ТЗ");

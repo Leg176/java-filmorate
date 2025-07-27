@@ -11,7 +11,7 @@ import lombok.NonNull;
 import java.time.LocalDate;
 
 @Data
-@EqualsAndHashCode(of = {"login"})
+@EqualsAndHashCode(of = {"id"})
 public class User {
     private Long id;
     @Email(message = "Неверный формат электронной почты")
