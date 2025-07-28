@@ -51,7 +51,7 @@ public class FilmController {
             throw new ValidationException("Id должен быть указан");
         }
 
-        if (newFilm.getReleaseDate() != null  && !checkReleaseDate(newFilm.getReleaseDate())) {
+        if (!checkReleaseDate(newFilm.getReleaseDate())) {
             log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", newFilm.getDuration());
             throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
         }
@@ -61,19 +61,13 @@ public class FilmController {
             Film oldFilm = films.get(newFilm.getId());
 
             log.trace("Обновляем название фильма.");
-            if (newFilm.getName() != null) {
-                oldFilm.setName(newFilm.getName());
-            }
+            oldFilm.setName(newFilm.getName());
 
             log.trace("Обновляем описание фильма.");
-            if (newFilm.getDescription() != null) {
-                oldFilm.setDescription(newFilm.getDescription());
-            }
+            oldFilm.setDescription(newFilm.getDescription());
 
             log.trace("Обновляем дату выхода фильма.");
-            if (newFilm.getReleaseDate() != null) {
-                oldFilm.setReleaseDate(newFilm.getReleaseDate());
-            }
+            oldFilm.setReleaseDate(newFilm.getReleaseDate());
 
             log.trace("Обновляем продолжительность фильма.");
             if (newFilm.getDuration() > 0) {

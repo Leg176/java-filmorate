@@ -68,29 +68,16 @@ public class UserController {
             throw new ValidationException("Этот имейл уже используется");
         }
 
-        log.trace("Проверка login {} на принадлежность другому пользователю", newUser.getLogin());
-        boolean isContainLogin = users.values().stream()
-                .anyMatch(u -> u.getLogin().equals(newUser.getLogin()));
-
-        if (isContainLogin) {
-            log.warn("Login {} используется другим пользователем", newUser.getLogin());
-            throw new ValidationException("Этот логин уже используется");
-        }
-
         log.info("Обновляем данные о пользователе с id {}.", newUser.getId());
         log.trace("Проверка наличия в коллекции пользователя с id указанным в теле метода PUT");
         if (users.containsKey(newUser.getId())) {
             User oldUser = users.get(newUser.getId());
 
             log.trace("Обновление email пользователя");
-            if (newUser.getEmail() != null) {
-                oldUser.setEmail(newUser.getEmail());
-            }
+            oldUser.setEmail(newUser.getEmail());
 
             log.trace("Обновление login пользователя");
-            if (newUser.getLogin() != null) {
-                oldUser.setLogin(newUser.getLogin());
-            }
+            oldUser.setLogin(newUser.getLogin());
 
             log.trace("Обновление имени пользователя");
             if (newUser.getName() != null) {
@@ -98,9 +85,8 @@ public class UserController {
             }
 
             log.trace("Обновление даты рождения пользователя");
-            if (newUser.getBirthday() != null) {
-                oldUser.setBirthday(newUser.getBirthday());
-            }
+            oldUser.setBirthday(newUser.getBirthday());
+
             log.info("Данные о пользователе {} обновлены", oldUser);
             return oldUser;
         }
