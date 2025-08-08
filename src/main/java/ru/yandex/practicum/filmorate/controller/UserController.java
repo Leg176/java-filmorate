@@ -22,7 +22,7 @@ public class UserController {
     private final UserService userService;
 
     @Autowired
-    private UserController(UserStorage userStorage, UserService userService){
+    private UserController(UserStorage userStorage, UserService userService) {
         this.userStorage = userStorage;
         this.userService = userService;
     }
