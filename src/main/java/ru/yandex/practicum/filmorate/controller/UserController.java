@@ -88,8 +88,8 @@ public class UserController {
     public List<User> findСommonFriendsUsers(@PathVariable @Min(1) Long id, @PathVariable @Min(1) Long otherId) {
         if (userStorage.getUser(id).isPresent()) {
             if (userStorage.getUser(otherId).isPresent()) {
-                return userService.findСommonFriendsUsers
-                        (userStorage.getUser(id).get(), userStorage.getUser(otherId).get());
+                return userService.findСommonFriendsUsers(userStorage.getUser(id).get(),
+                        userStorage.getUser(otherId).get());
             } else {
                 throw new NotFoundException("Пользователь с id = " + otherId +
                         " в списках зарегестрированных не найден");
