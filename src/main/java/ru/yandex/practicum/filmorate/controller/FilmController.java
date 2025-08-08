@@ -1,101 +1,79 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import lombok.extern.slf4j.Slf4j;
 
+import jakarta.validation.constraints.Min;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.time.LocalDate;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
+import java.util.Optional;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
 public class FilmController {
 
-    private final Map<Long, Film> films = new HashMap<>();
+    private final FilmStorage filmStorage;
+    private final FilmService filmService;
+    private final UserStorage userStorage;
+
+    @Autowired
+    private FilmController(FilmStorage filmStorage, FilmService filmService, UserStorage userStorage){
+        this.filmStorage = filmStorage;
+        this.filmService = filmService;
+        this.userStorage = userStorage;
+    }
 
     @GetMapping
     public Collection<Film> findAll() {
-        log.info("Получаем полный список фильмов содержащихся в коллекции");
-        return films.values();
+        return filmStorage.findAll();
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        log.info("Добавляем новый фильм {} в коллекцию.", film);
-
-        log.trace("Проверка даты релиза фильма на соблюдение требования ТЗ");
-        if (!checkReleaseDate(film.getReleaseDate())) {
-            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", film.getDuration());
-            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
-        }
-        log.trace("Присваиваем фильму уникальный id");
-        film.setId(getNextId());
-        // сохраняем новую публикацию в памяти приложения
-        log.debug("Сохраняем фильм в коллекцию");
-        films.put(film.getId(), film);
-        log.info("Фильм успешно добавлени с id: {}", film.getId());
-        return film;
+        return filmStorage.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film newFilm) {
-        log.trace("Обновление данных о фильме");
-        if (newFilm.getId() == null) {
-            log.warn("Не указан id фильма");
-            throw new ValidationException("Id должен быть указан");
-        }
-
-        if (!checkReleaseDate(newFilm.getReleaseDate())) {
-            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", newFilm.getDuration());
-            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
-        }
-        log.info("Обновляем данные о фильме с id: {}.", newFilm.getId());
-        log.trace("Проверка наличия в коллекции фильма с id указанным в теле метода PUT");
-        if (films.containsKey(newFilm.getId())) {
-            Film oldFilm = films.get(newFilm.getId());
-
-            log.trace("Обновляем название фильма.");
-            oldFilm.setName(newFilm.getName());
-
-            log.trace("Обновляем описание фильма.");
-            oldFilm.setDescription(newFilm.getDescription());
-
-            log.trace("Обновляем дату выхода фильма.");
-            oldFilm.setReleaseDate(newFilm.getReleaseDate());
-
-            log.trace("Обновляем продолжительность фильма.");
-            if (newFilm.getDuration() > 0) {
-                oldFilm.setDuration(newFilm.getDuration());
-            }
-
-            log.info("Данные о фильме {} обновлены", oldFilm);
-            return oldFilm;
-        }
-
-        log.warn("Фильм с id = {} не найден", newFilm.getId());
-        throw new ValidationException("Фильм с id = " + newFilm.getId() + " не найден");
+        return filmStorage.update(newFilm);
     }
 
-    // вспомогательный метод для генерации идентификатора нового поста
-    private long getNextId() {
-        log.debug("Генерируем id для фильма");
-        long currentMaxId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @GetMapping("/films/{id}")
+    public Optional<Film> getFilm(@PathVariable Long id) {
+        return filmStorage.getFilm(id);
     }
 
-    private boolean checkReleaseDate(LocalDate localDate) {
-        log.debug("Проверяем дату выхода фильма");
-        LocalDate firstFilmDate = LocalDate.of(1895, 12, 25);
-        return localDate.isAfter(firstFilmDate);
+    @PutMapping("/{id}/like/{userId}")
+    public void addLikes(@PathVariable Long id, @PathVariable Long userId) {
+        if (filmStorage.getFilm(id).isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + id + " в коллекции не найден");
+        }
+        if (userStorage.getUser(userId).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " в списках зарегестрированных не найден");
+        }
+        filmService.addLikes(filmStorage.getFilm(id).get(), userStorage.getUser(userId).get());
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    public void delLikes(@PathVariable Long id, @PathVariable Long userId) {
+        if (filmStorage.getFilm(id).isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + id + " в коллекции не найден");
+        }
+        if (userStorage.getUser(userId).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " в списках зарегестрированных не найден");
+        }
+        filmService.delLikes(filmStorage.getFilm(id).get(), userStorage.getUser(userId).get());
+    }
+
+    @GetMapping("/popular")
+    public List<Film> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
+        return filmService.topFilms(count);
     }
 }
