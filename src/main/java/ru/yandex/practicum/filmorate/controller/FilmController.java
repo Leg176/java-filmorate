@@ -8,8 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.user.UserStorage;
+import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,57 +18,55 @@ import java.util.Optional;
 @RequestMapping("/films")
 public class FilmController {
 
-    private final FilmStorage filmStorage;
     private final FilmService filmService;
-    private final UserStorage userStorage;
+    private final UserService userService;
 
     @Autowired
-    private FilmController(FilmStorage filmStorage, FilmService filmService, UserStorage userStorage) {
-        this.filmStorage = filmStorage;
+    private FilmController(FilmService filmService, UserService userService) {
         this.filmService = filmService;
-        this.userStorage = userStorage;
+        this.userService = userService;
     }
 
     @GetMapping
     public Collection<Film> findAll() {
-        return filmStorage.findAll();
+        return filmService.findAll();
     }
 
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        return filmStorage.create(film);
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@Valid @RequestBody Film newFilm) {
-        return filmStorage.update(newFilm);
+        return filmService.update(newFilm);
     }
 
     @GetMapping("/films/{id}")
     public Optional<Film> getFilm(@PathVariable Long id) {
-        return filmStorage.getFilm(id);
+        return filmService.getFilm(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public void addLikes(@PathVariable Long id, @PathVariable Long userId) {
-        if (filmStorage.getFilm(id).isEmpty()) {
+        if (filmService.getFilm(id).isEmpty()) {
             throw new NotFoundException("Фильм с id = " + id + " в коллекции не найден");
         }
-        if (userStorage.getUser(userId).isEmpty()) {
+        if (userService.getUser(userId).isEmpty()) {
             throw new NotFoundException("Пользователь с id = " + userId + " в списках зарегестрированных не найден");
         }
-        filmService.addLikes(filmStorage.getFilm(id).get(), userStorage.getUser(userId).get());
+        filmService.addLikes(filmService.getFilm(id).get(), userService.getUser(userId).get());
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public void delLikes(@PathVariable Long id, @PathVariable Long userId) {
-        if (filmStorage.getFilm(id).isEmpty()) {
+        if (filmService.getFilm(id).isEmpty()) {
             throw new NotFoundException("Фильм с id = " + id + " в коллекции не найден");
         }
-        if (userStorage.getUser(userId).isEmpty()) {
+        if (userService.getUser(userId).isEmpty()) {
             throw new NotFoundException("Пользователь с id = " + userId + " в списках зарегестрированных не найден");
         }
-        filmService.delLikes(filmStorage.getFilm(id).get(), userStorage.getUser(userId).get());
+        filmService.delLikes(filmService.getFilm(id).get(), userService.getUser(userId).get());
     }
 
     @GetMapping("/popular")

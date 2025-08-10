@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.storage.film;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
@@ -27,12 +26,6 @@ public class InMemoryFilmStorage implements FilmStorage {
     @Override
     public Film create(Film film) {
         log.info("Добавляем новый фильм {} в коллекцию.", film);
-
-        log.trace("Проверка даты релиза фильма на соблюдение требования ТЗ");
-        if (!checkReleaseDate(film.getReleaseDate())) {
-            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", film.getDuration());
-            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
-        }
         log.trace("Присваиваем фильму уникальный id");
         film.setId(getNextId());
         // сохраняем новую публикацию в памяти приложения
@@ -44,16 +37,6 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film update(Film newFilm) {
-        log.trace("Обновление данных о фильме");
-        if (newFilm.getId() == null) {
-            log.warn("Не указан id фильма");
-            throw new ValidationException("Id должен быть указан");
-        }
-
-        if (!checkReleaseDate(newFilm.getReleaseDate())) {
-            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", newFilm.getDuration());
-            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
-        }
         log.info("Обновляем данные о фильме с id: {}.", newFilm.getId());
         log.trace("Проверка наличия в коллекции фильма с id указанным в теле метода PUT");
         if (films.containsKey(newFilm.getId())) {
@@ -69,9 +52,7 @@ public class InMemoryFilmStorage implements FilmStorage {
             oldFilm.setReleaseDate(newFilm.getReleaseDate());
 
             log.trace("Обновляем продолжительность фильма.");
-            if (newFilm.getDuration() > 0) {
-                oldFilm.setDuration(newFilm.getDuration());
-            }
+            oldFilm.setDuration(newFilm.getDuration());
 
             log.info("Данные о фильме {} обновлены", oldFilm);
             return oldFilm;
