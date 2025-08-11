@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -24,14 +25,28 @@ public class UserService {
     }
 
     // Добавление друга
-    public void addFriend(User user1, User user2) {
+    public void addFriend(Long id, Long friendId) {
+        if (getUser(id).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + id + " в списках зарегестрированных не найден");
+        }
+        if (getUser(friendId).isEmpty()) {
+            throw new NotFoundException("Друг с id = " + friendId + " в списках зарегестрированных не найден");
+        }
+        if (id.equals(friendId)) {
+            throw new ValidationException("Нельзя добавить самого себя в друзья");
+        }
+        User user1 = getUser(id).get();
+        User user2 = getUser(friendId).get();
         user1.getFriends().add(user2.getId());
         user2.getFriends().add(user1.getId());
     }
 
     // Вывод всех друзей пользователя
-    public List<User> findAllFriendsUser(User user) {
-        return user.getFriends().stream()
+    public List<User> findAllFriendsUser(Long id) {
+        if (getUser(id).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + id + " в списках зарегестрированных не найден");
+        }
+        return getUser(id).get().getFriends().stream()
                 .map(userStorage::getUser)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -40,15 +55,32 @@ public class UserService {
     }
 
     // Метод для удаления друга
-    public void removeFriend(User user1, User user2) {
+    public void removeFriend(Long id, Long friendId) {
+        if (getUser(id).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + id + " в списках зарегестрированных не найден");
+        }
+        if (getUser(friendId).isEmpty()) {
+            throw new NotFoundException("Друг с id = " + friendId + " в списках зарегестрированных не найден");
+        }
+        if (id.equals(friendId)) {
+            throw new NotFoundException("Нельзя удалить самого себя из друзей");
+        }
+        User user1 = getUser(id).get();
+        User user2 = getUser(friendId).get();
         user1.getFriends().remove(user2.getId());
         user2.getFriends().remove(user1.getId());
     }
 
     // Поиск общих друзей
-    public List<User> findСommonFriendsUsers(User user1, User user2) {
-        return findAllFriendsUser(user1).stream()
-                .filter(friend -> findAllFriendsUser(user2).contains(friend))
+    public List<User> findСommonFriendsUsers(Long id, Long otherId) {
+        if (getUser(id).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + id + " в списках зарегестрированных не найден");
+            }
+        if (getUser(otherId).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + otherId + " в списках зарегестрированных не найден");
+        }
+        return findAllFriendsUser(id).stream()
+                .filter(friend -> findAllFriendsUser(otherId).contains(friend))
                 .collect(Collectors.toList());
     }
 

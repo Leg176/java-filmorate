@@ -3,9 +3,9 @@ package ru.yandex.practicum.filmorate.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 
 import java.time.LocalDate;
@@ -19,18 +19,32 @@ import java.util.stream.Collectors;
 public class FilmService {
 
     private final FilmStorage filmStorage;
+    private final UserService userService;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(FilmStorage filmStorage, UserService userService) {
         this.filmStorage = filmStorage;
+        this.userService = userService;
     }
 
-    public void addLikes(Film film, User user) {
-        film.getLikes().add(user.getId());
+    public void addLikes(Long id, Long userId) {
+        if (getFilm(id).isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + id + " в коллекции не найден");
+        }
+        if (userService.getUser(userId).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " в списках зарегестрированных не найден");
+        }
+        getFilm(id).get().getLikes().add(userId);
     }
 
-    public void delLikes(Film film, User user) {
-        film.getLikes().remove(user.getId());
+    public void delLikes(Long id, Long userId) {
+        if (getFilm(id).isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + id + " в коллекции не найден");
+        }
+        if (userService.getUser(userId).isEmpty()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " в списках зарегестрированных не найден");
+        }
+        getFilm(id).get().getLikes().remove(userId);
     }
 
     public List<Film> topFilms(int quantity) {
