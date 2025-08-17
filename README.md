@@ -2,4 +2,4 @@
 Template repository for Filmorate project.
 
 # Database Schema
-![](\resources\quickDBD.png)
+![Схема базы данных](resources/quickDBD.png)
