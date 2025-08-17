@@ -14,12 +14,12 @@ import java.util.Set;
  */
 
 @Data
-@EqualsAndHashCode(of = {"id"})
+@EqualsAndHashCode(of = {"idFilm"})
 public class Film {
-    private Long id;
+    private Long idFilm;
     @NotBlank(message = "Название не может быть пустым")
     @NonNull
-    private String name;
+    private String nameFilm;
     @NonNull
     @Size(max = 200, message = "Описание не должно превышать 200 символов")
     private String description;
@@ -29,4 +29,8 @@ public class Film {
     @Min(value = 1, message = "Длительность фильма должна быть положительной")
     private int duration;
     private Set<Long> likes = new HashSet<>();
+    private Set<Genre> genres = new HashSet<>();
+    @NotBlank(message = "Рейтинг не может быть пустым")
+    @NonNull
+    private MotionPictureAssociation rating;
 }

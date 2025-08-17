@@ -35,11 +35,11 @@ public class InMemoryUserStorage implements UserStorage {
         }
 
         log.trace("Присваиваем пользователю уникальный id");
-        user.setId(getNextId());
+        user.setIdUser(getNextId());
         // сохраняем новую публикацию в памяти приложения
         log.debug("Сохраняем пользователя в коллекцию");
-        users.put(user.getId(), user);
-        log.info("Пользователь успешно добавлени с id: {}", user.getId());
+        users.put(user.getIdUser(), user);
+        log.info("Пользователь успешно добавлени с id: {}", user.getIdUser());
 
         return user;
     }
@@ -47,10 +47,10 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User update(User newUser) {
 
-        log.info("Обновляем данные о пользователя с id {}.", newUser.getId());
+        log.info("Обновляем данные о пользователя с id {}.", newUser.getIdUser());
         log.trace("Проверка наличия в коллекции пользователя с id указанным в теле метода PUT");
-        if (users.containsKey(newUser.getId())) {
-            User oldUser = users.get(newUser.getId());
+        if (users.containsKey(newUser.getIdUser())) {
+            User oldUser = users.get(newUser.getIdUser());
             isContainEmail(newUser);
 
             log.trace("Обновление email пользователя");
@@ -70,8 +70,8 @@ public class InMemoryUserStorage implements UserStorage {
             log.info("Данные о пользователе {} обновлены", oldUser);
             return oldUser;
         }
-        log.warn("Пользователь с id = {} не найден", newUser.getId());
-        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+        log.warn("Пользователь с id = {} не найден", newUser.getIdUser());
+        throw new NotFoundException("Пользователь с id = " + newUser.getIdUser() + " не найден");
     }
 
     @Override
@@ -96,8 +96,8 @@ public class InMemoryUserStorage implements UserStorage {
     private void isContainEmail(User user) {
         log.trace("Проверка email {} на принадлежность другому пользователю", user.getEmail());
         boolean isContain = false;
-        if (user.getId() != null && (user.getId() > 0 && getUser(user.getId()).isPresent())) {
-            User oldUser = getUser(user.getId()).get();
+        if (user.getIdUser() != null && (user.getIdUser() > 0 && getUser(user.getIdUser()).isPresent())) {
+            User oldUser = getUser(user.getIdUser()).get();
             isContain = users.values().stream()
                     .filter(u -> !u.equals(oldUser))
                     .anyMatch(u -> u.getEmail().equals(user.getEmail()));

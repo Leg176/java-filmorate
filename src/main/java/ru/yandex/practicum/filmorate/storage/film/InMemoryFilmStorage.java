@@ -27,23 +27,23 @@ public class InMemoryFilmStorage implements FilmStorage {
     public Film create(Film film) {
         log.info("Добавляем новый фильм {} в коллекцию.", film);
         log.trace("Присваиваем фильму уникальный id");
-        film.setId(getNextId());
+        film.setIdFilm(getNextId());
         // сохраняем новую публикацию в памяти приложения
         log.debug("Сохраняем фильм в коллекцию");
-        films.put(film.getId(), film);
-        log.info("Фильм успешно добавлени с id: {}", film.getId());
+        films.put(film.getIdFilm(), film);
+        log.info("Фильм успешно добавлени с id: {}", film.getIdFilm());
         return film;
     }
 
     @Override
     public Film update(Film newFilm) {
-        log.info("Обновляем данные о фильме с id: {}.", newFilm.getId());
+        log.info("Обновляем данные о фильме с id: {}.", newFilm.getIdFilm());
         log.trace("Проверка наличия в коллекции фильма с id указанным в теле метода PUT");
-        if (films.containsKey(newFilm.getId())) {
-            Film oldFilm = films.get(newFilm.getId());
+        if (films.containsKey(newFilm.getIdFilm())) {
+            Film oldFilm = films.get(newFilm.getIdFilm());
 
             log.trace("Обновляем название фильма.");
-            oldFilm.setName(newFilm.getName());
+            oldFilm.setNameFilm(newFilm.getNameFilm());
 
             log.trace("Обновляем описание фильма.");
             oldFilm.setDescription(newFilm.getDescription());
@@ -58,8 +58,8 @@ public class InMemoryFilmStorage implements FilmStorage {
             return oldFilm;
         }
 
-        log.warn("Фильм с id = {} не найден", newFilm.getId());
-        throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
+        log.warn("Фильм с id = {} не найден", newFilm.getIdFilm());
+        throw new NotFoundException("Фильм с id = " + newFilm.getIdFilm() + " не найден");
     }
 
     @Override

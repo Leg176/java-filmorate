@@ -69,7 +69,7 @@ public class FilmService {
 
     public Film update(Film newFilm) {
         log.trace("Обновление данных о фильме");
-        if (newFilm.getId() == null) {
+        if (newFilm.getIdFilm() == null) {
             log.warn("Не указан id фильма");
             throw new ValidationException("Id должен быть указан");
         }
