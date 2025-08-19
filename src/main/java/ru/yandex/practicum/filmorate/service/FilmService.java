@@ -21,6 +21,8 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final UserService userService;
 
+    private static final LocalDate FIRST_FILM_DATE = LocalDate.of(1895, 12, 25);
+
     @Autowired
     public FilmService(FilmStorage filmStorage, UserService userService) {
         this.filmStorage = filmStorage;
@@ -55,11 +57,11 @@ public class FilmService {
     }
 
     public Film create(Film film) {
+        log.info("Добавляем новый фильм {} в коллекцию.", film);
+        log.trace("Присваиваем фильму уникальный id");
+        film.setIdFilm(getNextId());
         log.trace("Проверка даты релиза фильма на соблюдение требования ТЗ");
-        if (!checkReleaseDate(film.getReleaseDate())) {
-            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", film.getDuration());
-            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
-        }
+        checkReleaseDate(film.getReleaseDate());
         return filmStorage.create(film);
     }
 
@@ -69,25 +71,37 @@ public class FilmService {
 
     public Film update(Film newFilm) {
         log.trace("Обновление данных о фильме");
-        if (newFilm.getId() == null) {
+        if (newFilm.getIdFilm() == null) {
             log.warn("Не указан id фильма");
             throw new ValidationException("Id должен быть указан");
         }
-
-        if (!checkReleaseDate(newFilm.getReleaseDate())) {
-            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", newFilm.getDuration());
-            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
-        }
+        checkReleaseDate(newFilm.getReleaseDate());
         return filmStorage.update(newFilm);
     }
 
     public Optional<Film> getFilm(Long id) {
+        if (filmStorage.findAll() == null) {
+            return Optional.empty();
+        }
         return filmStorage.getFilm(id);
     }
 
-    private boolean checkReleaseDate(LocalDate localDate) {
+    private void checkReleaseDate(LocalDate localDate) {
         log.debug("Проверяем дату выхода фильма");
-        LocalDate firstFilmDate = LocalDate.of(1895, 12, 25);
-        return localDate.isAfter(firstFilmDate);
+        if (!localDate.isAfter(FIRST_FILM_DATE)) {
+            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", localDate);
+            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
+        }
+    }
+
+    private long getNextId() {
+        log.debug("Генерируем id для фильма");
+        long currentMaxId = filmStorage.findAll()
+                .stream()
+                .map(Film::getIdFilm)
+                .mapToLong(id -> id)
+                .max()
+                .orElse(0);
+        return ++currentMaxId;
     }
 }
