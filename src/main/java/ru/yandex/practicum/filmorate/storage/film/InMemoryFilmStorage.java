@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.storage.film;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
@@ -25,10 +26,6 @@ public class InMemoryFilmStorage implements FilmStorage {
 
     @Override
     public Film create(Film film) {
-        log.info("Добавляем новый фильм {} в коллекцию.", film);
-        log.trace("Присваиваем фильму уникальный id");
-        film.setIdFilm(getNextId());
-        // сохраняем новую публикацию в памяти приложения
         log.debug("Сохраняем фильм в коллекцию");
         films.put(film.getIdFilm(), film);
         log.info("Фильм успешно добавлени с id: {}", film.getIdFilm());
@@ -40,49 +37,17 @@ public class InMemoryFilmStorage implements FilmStorage {
         log.info("Обновляем данные о фильме с id: {}.", newFilm.getIdFilm());
         log.trace("Проверка наличия в коллекции фильма с id указанным в теле метода PUT");
         if (films.containsKey(newFilm.getIdFilm())) {
-            Film oldFilm = films.get(newFilm.getIdFilm());
-
-            log.trace("Обновляем название фильма.");
-            oldFilm.setNameFilm(newFilm.getNameFilm());
-
-            log.trace("Обновляем описание фильма.");
-            oldFilm.setDescription(newFilm.getDescription());
-
-            log.trace("Обновляем дату выхода фильма.");
-            oldFilm.setReleaseDate(newFilm.getReleaseDate());
-
-            log.trace("Обновляем продолжительность фильма.");
-            oldFilm.setDuration(newFilm.getDuration());
-
-            log.info("Данные о фильме {} обновлены", oldFilm);
-            return oldFilm;
+            films.put(newFilm.getIdFilm(), newFilm);
+            log.info("Данные о фильме {} обновлены", newFilm);
+            return newFilm;
         }
-
         log.warn("Фильм с id = {} не найден", newFilm.getIdFilm());
         throw new NotFoundException("Фильм с id = " + newFilm.getIdFilm() + " не найден");
     }
 
     @Override
     public Optional<Film> getFilm(Long id) {
-        if (films == null) {
-            return Optional.empty();
-        }
+        log.info("Вывод фильма с id {}.", id);
         return Optional.ofNullable(films.get(id));
-    }
-
-    private long getNextId() {
-        log.debug("Генерируем id для фильма");
-        long currentMaxId = films.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
-    }
-
-    private boolean checkReleaseDate(LocalDate localDate) {
-        log.debug("Проверяем дату выхода фильма");
-        LocalDate firstFilmDate = LocalDate.of(1895, 12, 25);
-        return localDate.isAfter(firstFilmDate);
     }
 }

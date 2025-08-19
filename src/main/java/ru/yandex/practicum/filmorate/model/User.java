@@ -27,5 +27,5 @@ public class User {
     @NonNull
     @PastOrPresent
     private LocalDate birthday;
-    private Map<Long, FriendshipStatus> friends = new HashMap<>();
+    private Map<Long, FriendshipStatus> friendship = new HashMap<>();
 }
