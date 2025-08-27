@@ -9,13 +9,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
-@EqualsAndHashCode(of = {"id"})
+@EqualsAndHashCode(of = {"idUser"})
 public class User {
-    private Long id;
+    private Long idUser;
     @Email(message = "Неверный формат электронной почты")
     @NonNull
     private String email;
@@ -27,5 +27,5 @@ public class User {
     @NonNull
     @PastOrPresent
     private LocalDate birthday;
-    private Set<Long> friends = new HashSet<>();
+    private Map<Long, FriendshipStatus> friendship = new HashMap<>();
 }
