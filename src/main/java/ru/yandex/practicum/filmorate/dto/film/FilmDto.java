@@ -1,40 +1,47 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.dto.film;
 
-import jakarta.validation.constraints.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NonNull;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
 
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Film.
- */
-
 @Data
-@EqualsAndHashCode(of = {"idFilm"})
-public class Film {
+public class FilmDto {
+
+    public FilmDto() {}
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long idFilm;
+
     @NotBlank(message = "Название не может быть пустым")
     @NonNull
     private String nameFilm;
+
     @NonNull
     @Size(max = 200, message = "Описание не должно превышать 200 символов")
     private String description;
+
     @NonNull
     @PastOrPresent
     private LocalDate releaseDate;
+
     @NonNull
     @Min(value = 1, message = "Длительность фильма должна быть положительной")
     private Integer duration;
+
     @NonNull
     private MotionPictureAssociation rating;
+
     private Set<Long> likes = new HashSet<>();
+
     private Set<Genre> genres = new HashSet<>();
-
-    public Film() {}
 }
-
-

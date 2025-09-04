@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
-import ru.yandex.practicum.filmorate.model.FriendshipStatus;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -36,8 +35,8 @@ public class UserService {
         }
         User user1 = getUser(id).get();
         User user2 = getUser(friendId).get();
-        user1.getFriendship().put(user2.getIdUser(), FriendshipStatus.PENDING);
-        user2.getFriendship().put(user1.getIdUser(), FriendshipStatus.PENDING);
+        user1.getFriendship().add(user2.getIdUser());
+        user2.getFriendship().add(user1.getIdUser());
     }
 
     // Вывод всех друзей пользователя
@@ -45,9 +44,7 @@ public class UserService {
         if (getUser(id).isEmpty()) {
             throw new NotFoundException("Пользователь с id = " + id + " в списках зарегестрированных не найден");
         }
-        return getUser(id).get().getFriendship().entrySet().stream()
-                .filter(entry -> entry.getValue() == FriendshipStatus.CONFIRMED)
-                .map(Map.Entry::getKey)
+        return getUser(id).get().getFriendship().stream()
                 .map(userStorage::getUser)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -73,37 +70,16 @@ public class UserService {
     }
 
     // Поиск общих друзей
-    public List<User> findСommonFriendsUsers(Long id, Long otherId) {
+    public List<User> findJointFriendsUsers(Long id, Long otherId) {
         if (getUser(id).isEmpty()) {
             throw new NotFoundException("Пользователь с id = " + id + " в списках зарегестрированных не найден");
-            }
+        }
         if (getUser(otherId).isEmpty()) {
             throw new NotFoundException("Пользователь с id = " + otherId + " в списках зарегестрированных не найден");
         }
-        List<User> friends1 = findAllFriendsUser(id);
-
-        Set<Long> friendsIds1 = friends1.stream()
-                .map(User::getIdUser)
-                .collect(Collectors.toSet());
-
-        return findAllFriendsUser(otherId).stream()
-                .filter(friend -> friendsIds1.contains(friend.getIdUser()))
+        return findAllFriendsUser(id).stream()
+                .filter(friend -> findAllFriendsUser(otherId).contains(friend))
                 .collect(Collectors.toList());
-    }
-
-    // Подтверждение дружбы
-    public void confirmationOfFriendship(Long id, Long idFriends){
-        if (getUser(id).isEmpty()) {
-            throw new NotFoundException("Пользователь с id = " + id + " в списках зарегестрированных не найден");
-        }
-        if (getUser(idFriends).isEmpty()) {
-            throw new NotFoundException("Пользователь с id = " + idFriends + " в списках зарегестрированных не найден");
-        }
-        if (getUser(id).get().getFriendship().containsKey(idFriends) &&
-        getUser(idFriends).get().getFriendship().containsKey(id)) {
-            getUser(id).get().getFriendship().put(idFriends, FriendshipStatus.CONFIRMED);
-            getUser(idFriends).get().getFriendship().put(id, FriendshipStatus.CONFIRMED);
-        }
     }
 
     public Collection<User> findAll() {
@@ -150,7 +126,7 @@ public class UserService {
 
     private void isContainEmail(User user) {
         log.trace("Проверка email {} на принадлежность другому пользователю", user.getEmail());
-        boolean isContain = false;
+        boolean isContain;
         if (user.getIdUser() != null && (user.getIdUser() > 0 && getUser(user.getIdUser()).isPresent())) {
             User oldUser = getUser(user.getIdUser()).get();
             isContain = userStorage.findAll().stream()
@@ -174,4 +150,3 @@ public class UserService {
         }
     }
 }
-

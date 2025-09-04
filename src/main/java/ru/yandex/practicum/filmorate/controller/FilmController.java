@@ -5,56 +5,57 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
+import ru.yandex.practicum.filmorate.serviceBD.FilmServiceBD;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/films")
 public class FilmController {
 
-    private final FilmService filmService;
+    private final FilmServiceBD filmServiceBD;
 
     @Autowired
-    private FilmController(FilmService filmService) {
-        this.filmService = filmService;
+    private FilmController(FilmServiceBD filmServiceBD) {
+        this.filmServiceBD = filmServiceBD;
     }
 
     @GetMapping
-    public Collection<Film> findAll() {
-        return filmService.findAll();
+    public Collection<FilmDto> findAll() {
+        return filmServiceBD.getFilms();
     }
 
     @PostMapping
-    public Film create(@Valid @RequestBody Film film) {
-        return filmService.create(film);
+    public FilmDto create(@Valid @RequestBody NewFilmRequest filmRequest) {
+        return filmServiceBD.createFilm(filmRequest);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) {
-        return filmService.update(newFilm);
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest filmRequest) {
+        return filmServiceBD.updateFilm(filmRequest);
     }
 
     @GetMapping("/{id}")
-    public Optional<Film> getFilm(@PathVariable Long id) {
-        return filmService.getFilm(id);
+    public FilmDto getFilm(@PathVariable Long id) {
+        return filmServiceBD.getFilmById(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
     public void addLikes(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.addLikes(id, userId);
+        filmServiceBD.addLikes(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
     public void delLikes(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.delLikes(id, userId);
+        filmServiceBD.deleteLikes(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
-        return filmService.topFilms(count);
+    public List<FilmDto> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
+        return filmServiceBD.topFilms(count);
     }
 }

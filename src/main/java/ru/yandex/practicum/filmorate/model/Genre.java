@@ -6,8 +6,11 @@ import lombok.NonNull;
 
 @Data
 public class Genre {
-    private Long idGenre;
+    private int idGenre;
     @NotBlank(message = "Название не может быть пустым")
     @NonNull
     private String name;
+
+    public Genre() {
+    }
 }
