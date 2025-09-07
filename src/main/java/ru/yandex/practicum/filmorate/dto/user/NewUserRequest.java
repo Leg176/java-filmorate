@@ -30,10 +30,4 @@ public class NewUserRequest {
     private LocalDate birthday;
 
     Set<Long> friendship = new HashSet<>();
-
-    public void checkName() {
-        if(name.isBlank()) {
-            this.name = login;
-        }
-    }
 }

@@ -4,24 +4,38 @@ DROP TABLE IF EXISTS FilmGenres CASCADE;
 DROP TABLE IF EXISTS Users CASCADE;
 DROP TABLE IF EXISTS Friends CASCADE;
 DROP TABLE IF EXISTS Likes CASCADE;
+DROP TABLE IF EXISTS Mpa_rating CASCADE;
+DROP TABLE IF EXISTS FilmMpa CASCADE;
 
 CREATE TABLE IF NOT EXISTS Films (
-     idFilm  BIGINT PRIMARY KEY AUTO_INCREMENT,
+     idFilm BIGINT PRIMARY KEY AUTO_INCREMENT,
      nameFilm VARCHAR(100) NOT NULL,
      description VARCHAR(2000) NOT NULL,
      releaseDate DATE NOT NULL,
-     duration INT NOT NULL CHECK (duration > 0),
-     ratingMPA VARCHAR(50) CHECK (ratingMPA IN ('G', 'PG', 'PG_13', 'R', 'NC_17'))
+     duration INT NOT NULL CHECK (duration > 0)
+     );
+
+CREATE TABLE IF NOT EXISTS Mpa_rating (
+     idMpa BIGINT PRIMARY KEY AUTO_INCREMENT,
+     nameMpa VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS FilmMpa (
+     idFilm BIGINT,
+     idMpa BIGINT,
+     PRIMARY KEY (idFilm, idMpa),
+     FOREIGN KEY (idFilm) REFERENCES Films(idFilm) ON DELETE CASCADE,
+     FOREIGN Key (idMpa) REFERENCES Mpa_rating(idMpa) ON DELETE CASCADE
      );
 
 CREATE TABLE IF NOT EXISTS Genres (
-     idGenre INT PRIMARY KEY AUTO_INCREMENT,
+     idGenre BIGINT PRIMARY KEY AUTO_INCREMENT,
      name VARCHAR(100) NOT NULL
      );
 
 CREATE TABLE IF NOT EXISTS FilmGenres (
-     idFilm  BIGINT,
-     idGenre INT,
+     idFilm BIGINT,
+     idGenre BIGINT,
      PRIMARY KEY (idFilm, idGenre),
      FOREIGN KEY (idFilm) REFERENCES Films(idFilm) ON DELETE CASCADE,
      FOREIGN Key (idGenre) REFERENCES Genres(idGenre) ON DELETE CASCADE
@@ -36,7 +50,7 @@ CREATE TABLE IF NOT EXISTS Users (
      );
 
 CREATE TABLE IF NOT EXISTS Likes (
-     idFilm  BIGINT,
+     idFilm BIGINT,
      idUser BIGINT,
      PRIMARY KEY (idFilm, idUser),
      FOREIGN KEY (idFilm) REFERENCES Films(idFilm) ON DELETE CASCADE,

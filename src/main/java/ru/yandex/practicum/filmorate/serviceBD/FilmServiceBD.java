@@ -4,8 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.GenreRepository;
-import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
@@ -14,11 +12,13 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -26,39 +26,50 @@ import java.util.stream.Collectors;
 public class FilmServiceBD {
 
     private final FilmRepository filmRepository;
-    private final GenreRepository genreRepository;
-    private final UserRepository userRepository;
+    private final GenreServiceBD genreServiceBD;
+    private final MpaServiceBD mpaServiceBD;
+    private final UserServiceBD userServiceBD;
+
+    private static final LocalDate FIRST_FILM_DATE = LocalDate.of(1895, 12, 25);
 
     @Autowired
-    public FilmServiceBD(FilmRepository filmRepository, GenreRepository genreRepository, UserRepository userRepository) {
+    public FilmServiceBD(FilmRepository filmRepository, MpaServiceBD mpaServiceBD, GenreServiceBD genreServiceBD,
+                         UserServiceBD userServiceBD) {
         this.filmRepository = filmRepository;
-        this.genreRepository = genreRepository;
-        this.userRepository = userRepository;
+        this.mpaServiceBD = mpaServiceBD;
+        this.genreServiceBD = genreServiceBD;
+        this.userServiceBD = userServiceBD;
     }
 
     public FilmDto createFilm(NewFilmRequest request) {
-        if (request == null) {
-            throw new ValidationException("Запрос на добавление нового фильма не может быть пустым");
-        }
-        Optional<Film> alreadyExistFilm = filmRepository.findByNameFilm(request.getNameFilm());
-        if (alreadyExistFilm.isPresent()) {
-            throw new ValidationException("Фильм с названием " + request.getNameFilm() + " уже существует");
-        }
+        validationRequest(request);
+        checkReleaseDate(request.getReleaseDate());
+        MotionPictureAssociation mpaBD = mpaServiceBD.getMpa(request.getMpa().getId());
+        Set<Genre> genres = request.getGenres();
+        validationGenres(genres);
+        genres = genres.stream()
+                .map(Genre::getId)
+                .distinct()
+                .map(genreServiceBD::getGenre)
+                .collect(Collectors.toSet());
         Film film = FilmMapper.mapToFilm(request);
-        Film filmWithId = filmRepository.save(film);
-        return FilmMapper.mapToFilmDto(filmWithId);
+        film.setMpa(mpaBD);
+        film.setGenres(new HashSet<>(genres));
+        filmRepository.save(film);
+        film.getGenres().stream()
+                .map(Genre::getId)
+                .forEach(id -> addGenres(film.getIdFilm(), id));
+        addMpaBD(film.getIdFilm(), mpaBD.getId());
+        return FilmMapper.mapToFilmDto(film);
     }
 
-    public FilmDto getFilmById(long idFilm) {
-        if (idFilm <= 0) {
-            throw new ValidationException("id не может быть отрицательными или равными 0");
+    public FilmDto getFilmById(Long idFilm) {
+        validationId(idFilm);
+        Optional<Film> filmOpt = filmRepository.getFilm(idFilm);
+        if (filmOpt.isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден");
         }
-        Film film = filmRepository.getFilm(idFilm)
-                .orElseThrow(() -> new NotFoundException("Фильм с id = " + idFilm + " не найден"));
-        List<Long> likes = filmRepository.findAllLikes(idFilm);
-        List<Genre> genres = genreRepository.findGenresFilm(idFilm);
-        film.setLikes(new HashSet<>(likes));
-        film.setGenres(new HashSet<>(genres));
+        Film film = filmOpt.get();
         return FilmMapper.mapToFilmDto(film);
     }
 
@@ -73,16 +84,32 @@ public class FilmServiceBD {
         if (request == null) {
             throw new ValidationException("Запрос на обновление данных фильма не может быть пустым");
         }
-        Film updatedFilm = filmRepository.getFilm(request.getIdFilm())
-                .map(film -> FilmMapper.updateFilmFields(film, request))
-                .orElseThrow(() -> new NotFoundException("Фильм с id = " + request.getIdFilm() + " не найден"));
+        if (request.hasReleaseDate()) {
+            checkReleaseDate(request.getReleaseDate());
+        }
+        validationId(request.getId());
+        if (request.getGenres() != null) {
+            validationGenres(request.getGenres());
+        }
+        Film film = validationFilm(request.getId());
+        Film updatedFilm = FilmMapper.updateFilmFields(film, request);
+
+        mpaServiceBD.isExistsMpa(updatedFilm.getMpa().getId());
+        validationGenres(updatedFilm.getGenres());
+
+        deleteMpaBD(film, film.getMpa());
+        deleteGenreBD(film);
+
         filmRepository.update(updatedFilm);
+        updatedFilm.getGenres().stream()
+                .map(Genre::getId)
+                .forEach(id -> addGenres(updatedFilm.getIdFilm(), id));
+        addMpaBD(updatedFilm.getIdFilm(), updatedFilm.getMpa().getId());
         return FilmMapper.mapToFilmDto(updatedFilm);
     }
 
-    public List<FilmDto> topFilms(int quantity) {
-        return filmRepository.findTopFilm(quantity)
-                .stream()
+    public List<FilmDto> topFilms(int count) {
+        return filmRepository.findTopFilm(count).stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
@@ -97,14 +124,78 @@ public class FilmServiceBD {
         filmRepository.deleteLike(idFilm, idUser);
     }
 
+    private void addMpaBD(Long idFilm, Long idMpa) {
+        filmRepository.addMpa(idFilm, idMpa);
+    }
+
+    private void addGenres(Long idFilm, Long idGenre) {
+        filmRepository.addGenre(idFilm, idGenre);
+    }
+
+    private void deleteMpaBD(Film film, MotionPictureAssociation mpa) {
+        filmRepository.delMpa(film.getIdFilm(), mpa.getId());
+    }
+
+    private void deleteGenreBD(Film film) {
+        film.getGenres().stream()
+                .map(Genre::getId)
+                .forEach(id -> filmRepository.delGenre(film.getIdFilm(), id));
+    }
+
+    private void checkReleaseDate(LocalDate localDate) {
+        log.debug("Проверяем дату выхода фильма");
+        if (!localDate.isAfter(FIRST_FILM_DATE)) {
+            log.warn("Дата выхода: {} фильма не должна быть ранее 25.12.1895 года", localDate);
+            throw new ValidationException("Дата выпуска фильма должна быть позже 25.12.1895г.");
+        }
+    }
+
     private void validationInLikes(Long idFilm, Long idUser) {
-        if (idFilm <= 0 || idUser <= 0) {
-            throw new ValidationException("id не могут быть отрицательными или равными 0");
+        validationId(idFilm);
+        validationId(idUser);
+        userServiceBD.validationUserIsEmpty(idUser);
+        validationFilm(idFilm);
+    }
+
+    private void validationRequest(NewFilmRequest request) {
+        if (request == null) {
+            throw new ValidationException("Запрос на добавление нового фильма не может быть пустым");
         }
-        Optional<Film> film = filmRepository.getFilm(idFilm);
-        Optional<User> user = userRepository.getUser(idUser);
-        if (film.isEmpty() || user.isEmpty()) {
-            throw new ValidationException("Фильм/пользователя в базе данных не существует");
+        Optional<Film> alreadyExistFilm = filmRepository.findByNameFilm(request.getName());
+        if (alreadyExistFilm.isPresent()) {
+            throw new ValidationException("Фильм с названием " + request.getName() + " уже существует");
         }
+        if (request.getMpa() == null) {
+            throw new NotFoundException("Mpa не может быть равно null");
+        }
+        mpaServiceBD.isExistsMpa(request.getMpa().getId());
+    }
+
+    private void validationGenres(Set<Genre> genres) {
+        boolean isPresentGenres = false;
+        if (genres != null && !genres.isEmpty()) {
+            Set<Long> allGenreId = genreServiceBD.getAllGenre().stream()
+                    .map(Genre::getId)
+                    .collect(Collectors.toSet());
+            isPresentGenres = genres.stream()
+                    .allMatch(genre -> allGenreId.contains(genre.getId()));
+        }
+        if (!isPresentGenres) {
+            throw new NotFoundException("Жанр в базе отсутствует");
+        }
+    }
+
+    private void validationId(Long id) {
+        if (id == null || id <= 0) {
+            throw new ValidationException("id не может быть отрицательным, равными 0 или null");
+        }
+    }
+
+    private Film validationFilm(Long idFilm) {
+        Optional<Film> filmOpt = filmRepository.getFilm(idFilm);
+        if (filmOpt.isEmpty()) {
+            throw new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден");
+        }
+        return filmOpt.get();
     }
 }

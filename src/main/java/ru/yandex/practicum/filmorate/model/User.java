@@ -9,14 +9,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 @Data
 @EqualsAndHashCode(of = {"idUser"})
 public class User {
+
     private Long idUser;
     @Email(message = "Неверный формат электронной почты")
     @NonNull

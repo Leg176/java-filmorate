@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class UserMapper {
+
     public static User mapToUser(NewUserRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Request не может быть пустым!");
@@ -16,16 +17,18 @@ public final class UserMapper {
         User user = new User();
         user.setEmail(request.getEmail());
         user.setLogin(request.getLogin());
-        request.checkName();
         user.setName(request.getName());
         user.setBirthday(request.getBirthday());
         user.setFriendship(request.getFriendship());
+        if(user.getName() == null || user.getName().isBlank()) {
+            user.setName(user.getLogin());
+        }
         return user;
     }
 
     public static UserDto mapToUserDto(User user) {
         UserDto dto = new UserDto();
-        dto.setIdUser(user.getIdUser());
+        dto.setId(user.getIdUser());
         dto.setEmail(user.getEmail());
         dto.setLogin(user.getLogin());
         if(user.getName().isBlank()) {

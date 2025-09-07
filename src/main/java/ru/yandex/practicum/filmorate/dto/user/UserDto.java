@@ -18,7 +18,7 @@ public class UserDto {
     public UserDto() {}
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Long idUser;
+    private Long id;
 
     @Email(message = "Неверный формат электронной почты")
     @NonNull

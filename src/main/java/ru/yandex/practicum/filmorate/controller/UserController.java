@@ -39,8 +39,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable Long idUser) {
-        return userServiceBD.getUserById(idUser);
+    public UserDto getUser(@PathVariable Long id) {
+        return userServiceBD.getUserById(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")

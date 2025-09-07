@@ -30,13 +30,13 @@ public class FilmController {
     }
 
     @PostMapping
-    public FilmDto create(@Valid @RequestBody NewFilmRequest filmRequest) {
-        return filmServiceBD.createFilm(filmRequest);
+    public FilmDto create(@Valid @RequestBody NewFilmRequest newfilmRequest) {
+        return filmServiceBD.createFilm(newfilmRequest);
     }
 
     @PutMapping
-    public FilmDto update(@Valid @RequestBody UpdateFilmRequest filmRequest) {
-        return filmServiceBD.updateFilm(filmRequest);
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest updatefilmRequest) {
+        return filmServiceBD.updateFilm(updatefilmRequest);
     }
 
     @GetMapping("/{id}")

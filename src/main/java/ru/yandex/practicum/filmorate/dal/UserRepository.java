@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dal;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -8,14 +9,16 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Repository
 public class UserRepository extends BaseRepository<User> {
-     private static final String FIND_ALL_FRIENDS_QUERY = "SELECT f.idUserFriends FROM Friends f WHERE f.idUser = ?";
+
+    private static final String FIND_ALL_FRIENDS_QUERY = "SELECT idUserFriends FROM Friends WHERE idUser = ?";
     private static final String FIND_ALL_QUERY = "SELECT * FROM Users";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM Users WHERE idUser = ?";
     private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM Users WHERE email = ?";
     private static final String INSERT_QUERY = "INSERT INTO Users(email, login, name, birthday)" +
-            "VALUES (?, ?, ?, ?) returning idUser";
+            "VALUES (?, ?, ?, ?)";
     private static final String ADD_FRIEND_QUERY = "INSERT INTO Friends(idUser, idUserFriends) VALUES (?, ?)";
     private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.idUserFriends FROM Friends f1 WHERE f1.idUser = ? " +
                     "AND f1.idUserFriends IN ( SELECT f2.idUserFriends FROM Friends f2 WHERE f2.idUser = ?)";
@@ -40,13 +43,11 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public void addFriend(long idUser, long friendId) {
-        insert(ADD_FRIEND_QUERY, idUser, friendId);
-        insert(ADD_FRIEND_QUERY, friendId, idUser);
+        insert(ADD_FRIEND_QUERY, "idUser", idUser, friendId);
     }
 
     public void deleteFriends(long idUser, long friendId) {
         jdbc.update(DELETE_FRIEND_QUERY, idUser, friendId);
-        jdbc.update(DELETE_FRIEND_QUERY, friendId, idUser);
     }
 
     public List<User> findJointFriendsUsers(Long idUser, Long otherId) {
@@ -62,20 +63,18 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public User save(User user) {
-        long id = insert(
-                INSERT_QUERY,
-                user.getEmail(),
-                user.getLogin(),
-                user.getName(),
-                user.getBirthday()
-        );
-        user.setIdUser(id);
-        return user;
+            long id = insert(INSERT_QUERY, "idUser",
+                    user.getEmail(),
+                    user.getLogin(),
+                    user.getName(),
+                    user.getBirthday()
+            );
+            user.setIdUser(id);
+            return user;
     }
 
     public User update(User user) {
-        update(
-                UPDATE_QUERY,
+        update(UPDATE_QUERY,
                 user.getEmail(),
                 user.getLogin(),
                 user.getName(),

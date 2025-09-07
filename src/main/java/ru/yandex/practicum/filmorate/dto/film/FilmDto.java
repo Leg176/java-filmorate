@@ -20,11 +20,11 @@ public class FilmDto {
     public FilmDto() {}
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private Long idFilm;
+    private Long id;
 
     @NotBlank(message = "Название не может быть пустым")
     @NonNull
-    private String nameFilm;
+    private String name;
 
     @NonNull
     @Size(max = 200, message = "Описание не должно превышать 200 символов")
@@ -38,10 +38,7 @@ public class FilmDto {
     @Min(value = 1, message = "Длительность фильма должна быть положительной")
     private Integer duration;
 
-    @NonNull
-    private MotionPictureAssociation rating;
-
-    private Set<Long> likes = new HashSet<>();
+    private MotionPictureAssociation mpa;
 
     private Set<Genre> genres = new HashSet<>();
 }

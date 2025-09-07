@@ -16,6 +16,7 @@ import java.util.Set;
 @Data
 @EqualsAndHashCode(of = {"idFilm"})
 public class Film {
+
     private Long idFilm;
     @NotBlank(message = "Название не может быть пустым")
     @NonNull
@@ -29,10 +30,10 @@ public class Film {
     @NonNull
     @Min(value = 1, message = "Длительность фильма должна быть положительной")
     private Integer duration;
-    @NonNull
-    private MotionPictureAssociation rating;
-    private Set<Long> likes = new HashSet<>();
+
+    private MotionPictureAssociation mpa;
     private Set<Genre> genres = new HashSet<>();
+    private Set<Long> likes = new HashSet<>();
 
     public Film() {}
 }

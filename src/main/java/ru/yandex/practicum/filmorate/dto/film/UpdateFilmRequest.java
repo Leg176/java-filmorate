@@ -2,15 +2,17 @@ package ru.yandex.practicum.filmorate.dto.film;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 public class UpdateFilmRequest {
     @NotNull
     @Min(value = 1, message = "Id не может быть меньше 1.")
-    private Long idFilm;
+    private Long id;
 
     private String nameFilm;
 
@@ -22,7 +24,9 @@ public class UpdateFilmRequest {
 
     private Integer duration;
 
-    private MotionPictureAssociation rating;
+    private MotionPictureAssociation mpa;
+
+    private final Set<Genre> genres;
 
     public boolean hasNameFilm() {
         return !nameFilm.isBlank();
@@ -40,7 +44,11 @@ public class UpdateFilmRequest {
         return duration != null && duration >= 1;
     }
 
-    public boolean hasRating() {
-        return rating != null;
+    public boolean hasMpa() {
+        return mpa != null;
+    }
+
+    public boolean hasGenres() {
+        return genres != null;
     }
 }

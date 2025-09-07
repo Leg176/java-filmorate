@@ -7,9 +7,9 @@ import java.time.LocalDate;
 
 @Data
 public class UpdateUserRequest {
-    @NotNull
-    @Min(value = 1, message = "Id не может быть меньше 1.")
-    private Long idUser;
+    /*@NotNull
+    @Min(value = 1, message = "Id не может быть меньше 1.")*/
+    private Long id;
 
     @Email(message = "Неверный формат электронной почты")
     private String email;
