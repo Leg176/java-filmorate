@@ -8,5 +8,6 @@ public class MotionPictureAssociation {
     private Long id;
     private String name;
 
-    public MotionPictureAssociation() {}
+    public MotionPictureAssociation() {
+    }
 }
