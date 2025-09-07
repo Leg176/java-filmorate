@@ -20,7 +20,7 @@ public class GenreServiceBD {
         this.genreRepository = genreRepository;
     }
 
-    public Genre getGenre(long idGenre) {
+    public Genre getGenre(Long idGenre) {
 
         if (idGenre <= 0) {
             throw new ValidationException("id не может быть отрицательными или равными 0");
@@ -35,7 +35,7 @@ public class GenreServiceBD {
         return genreRepository.findAll();
     }
 
-    public List<Genre> getGenresByIdFilm(long idFilm) {
+    public List<Genre> getGenresByIdFilm(Long idFilm) {
         if (idFilm <= 0) {
             throw new ValidationException("id не может быть отрицательными или равными 0");
         }

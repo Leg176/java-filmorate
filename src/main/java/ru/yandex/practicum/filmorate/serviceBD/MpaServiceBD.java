@@ -21,7 +21,7 @@ public class MpaServiceBD {
         this.mpaRepository = mpaRepository;
     }
 
-    public MotionPictureAssociation getMpa(long idMpa) {
+    public MotionPictureAssociation getMpa(Long idMpa) {
         if (idMpa <= 0) {
             throw new ValidationException("id не может быть отрицательными или равными 0");
         }

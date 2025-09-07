@@ -23,7 +23,7 @@ public class UserServiceBD {
     private final UserRepository userRepository;
 
     @Autowired
-    public UserServiceBD (UserRepository userRepository) {
+    public UserServiceBD(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
