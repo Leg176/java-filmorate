@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class GenreRepository extends BaseRepository<Genre>{
+public class GenreRepository extends BaseRepository<Genre> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM Genres";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM Genres WHERE idGenre = ?";
     private static final String FIND_GENRES_BY_ID_FILM_QUERY = "SELECT g.* FROM Genres g " +
