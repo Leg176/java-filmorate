@@ -183,9 +183,9 @@ public class FilmServiceBD {
         if (validGenres.isEmpty()) {
             throw new NotFoundException("Ни один из указанных жанров не найден в базе данных");
         }
-
         return validGenres;
     }
+
     private void validationGenres(Set<Genre> genres) {
         boolean isPresentGenres = genres == null;
         if (genres != null && !genres.isEmpty()) {
