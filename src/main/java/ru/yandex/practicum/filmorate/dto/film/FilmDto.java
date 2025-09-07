@@ -17,7 +17,8 @@ import java.util.Set;
 @Data
 public class FilmDto {
 
-    public FilmDto() {}
+    public FilmDto() {
+    }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;

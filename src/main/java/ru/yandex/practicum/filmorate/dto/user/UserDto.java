@@ -15,7 +15,8 @@ import java.util.Set;
 @Data
 public class UserDto {
 
-    public UserDto() {}
+    public UserDto() {
+    }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Long id;
