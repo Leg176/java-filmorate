@@ -46,15 +46,16 @@ public class FilmServiceBD {
         checkReleaseDate(request.getReleaseDate());
         MotionPictureAssociation mpaBD = mpaServiceBD.getMpa(request.getMpa().getId());
         Set<Genre> genres = request.getGenres();
-        validationGenres(genres);
-        genres = genres.stream()
+        Set<Genre> validGenre = validateAndFilterGenres(genres);
+        //validationGenres(genres);
+        validGenre = validGenre.stream()
                 .map(Genre::getId)
                 .distinct()
                 .map(genreServiceBD::getGenre)
                 .collect(Collectors.toSet());
         Film film = FilmMapper.mapToFilm(request);
         film.setMpa(mpaBD);
-        film.setGenres(new HashSet<>(genres));
+        film.setGenres(new HashSet<>(validGenre));
         filmRepository.save(film);
         film.getGenres().stream()
                 .map(Genre::getId)
@@ -161,18 +162,32 @@ public class FilmServiceBD {
         if (request == null) {
             throw new ValidationException("Запрос на добавление нового фильма не может быть пустым");
         }
-        Optional<Film> alreadyExistFilm = filmRepository.findByNameFilm(request.getName());
-        if (alreadyExistFilm.isPresent()) {
-            throw new ValidationException("Фильм с названием " + request.getName() + " уже существует");
-        }
         if (request.getMpa() == null) {
             throw new NotFoundException("Mpa не может быть равно null");
         }
         mpaServiceBD.isExistsMpa(request.getMpa().getId());
     }
 
+    private Set<Genre> validateAndFilterGenres(Set<Genre> requestedGenres) {
+        // Получаем все существующие ID жанров из базы
+        Set<Long> existingGenreIds = genreServiceBD.getAllGenre().stream()
+                .map(Genre::getId)
+                .collect(Collectors.toSet());
+
+        // Фильтруем только существующие жанры
+        Set<Genre> validGenres = requestedGenres.stream()
+                .filter(genre -> existingGenreIds.contains(genre.getId()))
+                .collect(Collectors.toSet());
+
+        // Проверяем, что есть хотя бы один валидный жанр
+        if (validGenres.isEmpty()) {
+            throw new NotFoundException("Ни один из указанных жанров не найден в базе данных");
+        }
+
+        return validGenres;
+    }
     private void validationGenres(Set<Genre> genres) {
-        boolean isPresentGenres = false;
+        boolean isPresentGenres = genres == null;
         if (genres != null && !genres.isEmpty()) {
             Set<Long> allGenreId = genreServiceBD.getAllGenre().stream()
                     .map(Genre::getId)
