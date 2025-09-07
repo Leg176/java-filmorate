@@ -35,7 +35,7 @@ public class MpaServiceBD {
         return mpaRepository.getAllMpa();
     }
 
-    public MotionPictureAssociation getMpaFilm(long idFilm) {
+    public MotionPictureAssociation getMpaFilm(Long idFilm) {
         if (idFilm <= 0) {
             throw new ValidationException("id не может быть отрицательными или равными 0");
         }
@@ -50,6 +50,6 @@ public class MpaServiceBD {
     public void isExistsMpa(Long idMpa) {
         if (mpaRepository.getMpa(idMpa).isEmpty()) {
             throw new NotFoundException("Mpa в базе данных не найдено");
-        };
+        }
     }
 }
