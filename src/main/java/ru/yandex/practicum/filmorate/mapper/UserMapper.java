@@ -20,7 +20,7 @@ public final class UserMapper {
         user.setName(request.getName());
         user.setBirthday(request.getBirthday());
         user.setFriendship(request.getFriendship());
-        if(user.getName() == null || user.getName().isBlank()) {
+        if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
         return user;
@@ -31,7 +31,7 @@ public final class UserMapper {
         dto.setId(user.getIdUser());
         dto.setEmail(user.getEmail());
         dto.setLogin(user.getLogin());
-        if(user.getName().isBlank()) {
+        if (user.getName().isBlank()) {
             dto.setName(user.getLogin());
         } else {
             dto.setName(user.getName());
