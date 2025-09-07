@@ -7,8 +7,6 @@ import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.HashSet;
-
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilmMapper {
 
