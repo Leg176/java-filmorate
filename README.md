@@ -19,7 +19,7 @@ LEFT OUTER JOIN Genres AS g ON fg.idGenre = g.idGenre
 ORDER BY likesFilm DESC
 LIMIT 10;
 ```
-# Пример SQL-запроса на вывод всех 10 пользователей отсортированных по id:
+# Пример SQL-запроса на вывод 10 пользователей отсортированных по id:
 ```sql
 SELECT u.idUser,
        u.email,
