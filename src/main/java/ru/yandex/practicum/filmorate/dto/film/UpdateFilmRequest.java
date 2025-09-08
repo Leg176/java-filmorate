@@ -14,7 +14,7 @@ public class UpdateFilmRequest {
     @Min(value = 1, message = "Id не может быть меньше 1.")
     private Long id;
 
-    private String nameFilm;
+    private String name;
 
     @Size(max = 200, message = "Описание не должно превышать 200 символов")
     private String description;
@@ -29,7 +29,7 @@ public class UpdateFilmRequest {
     private final Set<Genre> genres;
 
     public boolean hasNameFilm() {
-        return !nameFilm.isBlank();
+        return !name.isBlank();
     }
 
     public boolean hasDescription() {

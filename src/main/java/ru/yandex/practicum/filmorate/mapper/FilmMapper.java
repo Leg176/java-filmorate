@@ -40,7 +40,7 @@ public class FilmMapper {
         }
 
         if (request.hasNameFilm()) {
-            film.setNameFilm(request.getNameFilm());
+            film.setNameFilm(request.getName());
         }
         if (request.hasDescription()) {
             film.setDescription(request.getDescription());

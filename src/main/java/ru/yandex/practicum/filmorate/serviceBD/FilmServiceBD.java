@@ -15,10 +15,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -42,25 +39,28 @@ public class FilmServiceBD {
     }
 
     public FilmDto createFilm(NewFilmRequest request) {
-        validationRequest(request);
-        checkReleaseDate(request.getReleaseDate());
-        MotionPictureAssociation mpaBD = mpaServiceBD.getMpa(request.getMpa().getId());
-        Set<Genre> genres = request.getGenres();
-        validationGenres(genres);
-        genres = genres.stream()
-                .map(Genre::getId)
-                .distinct()
-                .map(genreServiceBD::getGenre)
-                .collect(Collectors.toSet());
-        Film film = FilmMapper.mapToFilm(request);
-        film.setMpa(mpaBD);
-        film.setGenres(new HashSet<>(genres));
-        filmRepository.save(film);
-        film.getGenres().stream()
-                .map(Genre::getId)
-                .forEach(id -> addGenres(film.getIdFilm(), id));
-        addMpaBD(film.getIdFilm(), mpaBD.getId());
-        return FilmMapper.mapToFilmDto(film);
+        try {
+            validationRequest(request);
+            checkReleaseDate(request.getReleaseDate());
+            MotionPictureAssociation mpaBD = mpaServiceBD.getMpa(request.getMpa().getId());
+            Set<Genre> genres = request.getGenres();
+            Set<Genre> validGenres = validationGenres(genres);
+
+            Film film = FilmMapper.mapToFilm(request);
+            film.setMpa(mpaBD);
+            film.setGenres(new HashSet<>(validGenres));
+
+            Film savedFilm = filmRepository.save(film);
+            log.info("Фильм сохранен с ID: {}", savedFilm.getIdFilm());
+            savedFilm.getGenres().stream()
+                    .map(Genre::getId)
+                    .forEach(id -> addGenres(savedFilm.getIdFilm(), id));
+            addMpaBD(savedFilm.getIdFilm(), mpaBD.getId());
+            return FilmMapper.mapToFilmDto(savedFilm);
+        } catch (Exception e) {
+            log.error("Ошибка при создании фильма", e);
+            throw e;
+        }
     }
 
     public FilmDto getFilmById(Long idFilm) {
@@ -88,14 +88,13 @@ public class FilmServiceBD {
             checkReleaseDate(request.getReleaseDate());
         }
         validationId(request.getId());
-        if (request.getGenres() != null) {
-            validationGenres(request.getGenres());
-        }
+
         Film film = validationFilm(request.getId());
         Film updatedFilm = FilmMapper.updateFilmFields(film, request);
 
         mpaServiceBD.isExistsMpa(updatedFilm.getMpa().getId());
-        validationGenres(updatedFilm.getGenres());
+        Set<Genre> validGenreUpdate = validationGenres(updatedFilm.getGenres());
+        updatedFilm.setGenres(validGenreUpdate);
 
         deleteMpaBD(film, film.getMpa());
         deleteGenreBD(film);
@@ -167,18 +166,16 @@ public class FilmServiceBD {
         mpaServiceBD.isExistsMpa(request.getMpa().getId());
     }
 
-    private void validationGenres(Set<Genre> genres) {
-        boolean isPresentGenres = genres == null;
-        if (genres != null && !genres.isEmpty()) {
-            Set<Long> allGenreId = genreServiceBD.getAllGenre().stream()
-                    .map(Genre::getId)
-                    .collect(Collectors.toSet());
-            isPresentGenres = genres.stream()
-                    .allMatch(genre -> allGenreId.contains(genre.getId()));
+    private Set<Genre> validationGenres(Set<Genre> genres) {
+        if (genres == null) {
+            return new HashSet<>();
         }
-        if (!isPresentGenres) {
-            throw new NotFoundException("Жанр в базе отсутствует");
-        }
+        return genres.stream()
+                .map(Genre::getId)
+                .distinct()
+                .map(genreServiceBD::getGenre)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
     }
 
     private void validationId(Long id) {
