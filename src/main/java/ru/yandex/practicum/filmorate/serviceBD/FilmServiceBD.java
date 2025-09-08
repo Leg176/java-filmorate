@@ -89,21 +89,38 @@ public class FilmServiceBD {
         }
         validationId(request.getId());
 
+        // Получаем объект по id запроса
         Film film = validationFilm(request.getId());
-        Film updatedFilm = FilmMapper.updateFilmFields(film, request);
 
-        mpaServiceBD.isExistsMpa(updatedFilm.getMpa().getId());
-        Set<Genre> validGenreUpdate = validationGenres(updatedFilm.getGenres());
-        updatedFilm.setGenres(validGenreUpdate);
-        filmRepository.update(updatedFilm);
-        deleteMpaBD(film, film.getMpa());
-        deleteGenreBD(film);
+        //Находим жанры принадлежавшие старому объекту Film
+        MotionPictureAssociation mpa = mpaServiceBD.getMpaFilm(film.getIdFilm());
+        List<Genre> genresOldFilm = genreServiceBD.getGenresByIdFilm(film.getIdFilm());
 
-        updatedFilm.getGenres().stream()
+        //Создаём новый объект
+        Film newFilm = FilmMapper.updateFilmFields(film, request);
+
+        //проверяем Genre/Mpa
+        mpaServiceBD.isExistsMpa(newFilm.getMpa().getId());
+        Set<Genre> validGenreUpdate = validationGenres(newFilm.getGenres());
+
+        newFilm.setGenres(validGenreUpdate);
+        filmRepository.update(newFilm);
+
+        if (mpa != null) {
+            // Удаляем старые связи
+            deleteMpaBD(film, mpa);
+        }
+        if (!genresOldFilm.isEmpty()) {
+            // Удаляем старые связи
+            deleteGenreBD(film, genresOldFilm);
+        }
+
+        //Добавляем в таблицу связей пары фильм - жанр/рейтинг
+        newFilm.getGenres().stream()
                 .map(Genre::getId)
-                .forEach(id -> addGenres(updatedFilm.getIdFilm(), id));
-        addMpaBD(updatedFilm.getIdFilm(), updatedFilm.getMpa().getId());
-        return FilmMapper.mapToFilmDto(updatedFilm);
+                .forEach(id -> addGenres(newFilm.getIdFilm(), id));
+        addMpaBD(newFilm.getIdFilm(), newFilm.getMpa().getId());
+        return FilmMapper.mapToFilmDto(newFilm);
     }
 
     public List<FilmDto> topFilms(int count) {
@@ -134,8 +151,8 @@ public class FilmServiceBD {
         filmRepository.delMpa(film.getIdFilm(), mpa.getId());
     }
 
-    private void deleteGenreBD(Film film) {
-        film.getGenres().stream()
+    private void deleteGenreBD(Film film, List<Genre> genres) {
+        genres.stream()
                 .map(Genre::getId)
                 .forEach(id -> filmRepository.delGenre(film.getIdFilm(), id));
     }
