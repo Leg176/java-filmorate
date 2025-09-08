@@ -69,10 +69,15 @@ public class FilmServiceBD {
     }
 
     public List<FilmDto> getFilms() {
-        return filmRepository.findAll()
-                .stream()
-                .map(FilmMapper::mapToFilmDto)
-                .collect(Collectors.toList());
+        try {
+            return filmRepository.findAll()
+                    .stream()
+                    .map(FilmMapper::mapToFilmDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("Ошибка при получении списка фильмов", e);
+            throw new RuntimeException("Ошибка при получении списка фильмов", e);
+        }
     }
 
     public FilmDto updateFilm(UpdateFilmRequest request) {
@@ -90,10 +95,10 @@ public class FilmServiceBD {
         mpaServiceBD.isExistsMpa(updatedFilm.getMpa().getId());
         Set<Genre> validGenreUpdate = validationGenres(updatedFilm.getGenres());
         updatedFilm.setGenres(validGenreUpdate);
+        filmRepository.update(updatedFilm);
         deleteMpaBD(film, film.getMpa());
         deleteGenreBD(film);
 
-        filmRepository.update(updatedFilm);
         updatedFilm.getGenres().stream()
                 .map(Genre::getId)
                 .forEach(id -> addGenres(updatedFilm.getIdFilm(), id));

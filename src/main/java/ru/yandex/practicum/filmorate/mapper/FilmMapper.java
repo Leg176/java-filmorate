@@ -8,6 +8,8 @@ import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.HashSet;
+
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class FilmMapper {
@@ -32,7 +34,7 @@ public class FilmMapper {
         dto.setReleaseDate(film.getReleaseDate());
         dto.setDuration(film.getDuration());
         dto.setMpa(film.getMpa());
-        dto.setGenres(film.getGenres());
+        dto.setGenres(new HashSet<>(film.getGenres()));
         return dto;
     }
 
