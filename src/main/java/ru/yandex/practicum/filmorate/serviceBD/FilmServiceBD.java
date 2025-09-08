@@ -39,28 +39,23 @@ public class FilmServiceBD {
     }
 
     public FilmDto createFilm(NewFilmRequest request) {
-        try {
-            validationRequest(request);
-            checkReleaseDate(request.getReleaseDate());
-            MotionPictureAssociation mpaBD = mpaServiceBD.getMpa(request.getMpa().getId());
-            Set<Genre> genres = request.getGenres();
-            Set<Genre> validGenres = validationGenres(genres);
+        validationRequest(request);
+        checkReleaseDate(request.getReleaseDate());
+        MotionPictureAssociation mpaBD = mpaServiceBD.getMpa(request.getMpa().getId());
+        Set<Genre> genres = request.getGenres();
+        Set<Genre> validGenres = validationGenres(genres);
 
-            Film film = FilmMapper.mapToFilm(request);
-            film.setMpa(mpaBD);
-            film.setGenres(new HashSet<>(validGenres));
+        Film film = FilmMapper.mapToFilm(request);
+        film.setMpa(mpaBD);
+        film.setGenres(new HashSet<>(validGenres));
 
-            Film savedFilm = filmRepository.save(film);
-            log.info("Фильм сохранен с ID: {}", savedFilm.getIdFilm());
-            savedFilm.getGenres().stream()
-                    .map(Genre::getId)
-                    .forEach(id -> addGenres(savedFilm.getIdFilm(), id));
-            addMpaBD(savedFilm.getIdFilm(), mpaBD.getId());
-            return FilmMapper.mapToFilmDto(savedFilm);
-        } catch (Exception e) {
-            log.error("Ошибка при создании фильма", e);
-            throw e;
-        }
+        Film savedFilm = filmRepository.save(film);
+        log.info("Фильм сохранен с ID: {}", savedFilm.getIdFilm());
+        savedFilm.getGenres().stream()
+                .map(Genre::getId)
+                .forEach(id -> addGenres(savedFilm.getIdFilm(), id));
+        addMpaBD(savedFilm.getIdFilm(), mpaBD.getId());
+        return FilmMapper.mapToFilmDto(savedFilm);
     }
 
     public FilmDto getFilmById(Long idFilm) {

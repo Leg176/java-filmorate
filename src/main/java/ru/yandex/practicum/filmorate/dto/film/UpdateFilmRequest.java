@@ -10,6 +10,10 @@ import java.util.Set;
 
 @Data
 public class UpdateFilmRequest {
+
+    public UpdateFilmRequest() {
+    }
+
     @NotNull
     @Min(value = 1, message = "Id не может быть меньше 1.")
     private Long id;
@@ -26,7 +30,7 @@ public class UpdateFilmRequest {
 
     private MotionPictureAssociation mpa;
 
-    private final Set<Genre> genres;
+    private Set<Genre> genres;
 
     public boolean hasNameFilm() {
         return !name.isBlank();
