@@ -95,7 +95,6 @@ public class FilmServiceBD {
         mpaServiceBD.isExistsMpa(updatedFilm.getMpa().getId());
         Set<Genre> validGenreUpdate = validationGenres(updatedFilm.getGenres());
         updatedFilm.setGenres(validGenreUpdate);
-
         deleteMpaBD(film, film.getMpa());
         deleteGenreBD(film);
 
