@@ -43,25 +43,16 @@ public class FilmService {
     }
 
     public FilmDto createFilm(NewFilmRequest request) {
-        if (request == null) {
-            throw new ValidationException("Запрос на добавление нового фильма не может быть пустым");
-        }
+        validateRequest(request, "Запрос на добавление нового фильма не может быть пустым");
         checkReleaseDate(request.getReleaseDate());
+
         MotionPictureAssociation mpaRequest = request.getMpa();
-        if (mpaRequest == null) {
-            throw new ValidationException("Mpa в запросе на обновление данных фильма не может быть пустым");
-        }
-        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(mpaRequest.getId());
-        if (mpaOpt.isEmpty()) {
-            throw new NotFoundException("Mpa с id = " + mpaRequest.getId() + " в базе данных не найден");
-        }
-        //Лишние действие
-        MotionPictureAssociation mpaBD = mpaOpt.get();
+        MotionPictureAssociation mpaBD = validateAndGetMpa(mpaRequest);
+
         Set<Genre> genres = request.getGenres();
         Set<Genre> validGenres = validationGenres(genres);
 
         Film film = FilmMapper.mapToFilm(request);
-        //Лишние действие
         film.setMpa(mpaBD);
         film.setGenres(new HashSet<>(validGenres));
 
@@ -75,11 +66,7 @@ public class FilmService {
     }
 
     public FilmDto getFilmById(Long idFilm) {
-        Optional<Film> filmOpt = filmRepository.getFilm(idFilm);
-        if (filmOpt.isEmpty()) {
-            throw new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден");
-        }
-        Film film = filmOpt.get();
+        Film film = validationFilm(idFilm);
         Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(film.getMpa().getId());
         if (mpaOpt.isEmpty()) {
             throw new NotFoundException("Mpa в базе данных не найдено");
@@ -93,29 +80,23 @@ public class FilmService {
     public List<FilmDto> getFilms() {
         try {
             List<Film> films = filmRepository.findAll();
-
-            // Проверяем, что список фильмов не пустой
             if (films.isEmpty()) {
                 return Collections.emptyList();
             }
 
-            // Собираем уникальные ID для MPA
             List<Long> ids = films.stream()
                     .map(Film::getIdFilm)
                     .distinct()
                     .collect(Collectors.toList());
 
-            // Загружаем MPA и жанры
             Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
             Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
 
-            // Связываем данные
             for (Film film : films) {
                 film.setMpa(mpaMap.get(film.getIdFilm()));
                 film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
             }
 
-            // Преобразуем в DTO
             return films.stream()
                     .map(FilmMapper::mapToFilmDto)
                     .collect(Collectors.toList());
@@ -126,41 +107,28 @@ public class FilmService {
     }
 
     public FilmDto updateFilm(UpdateFilmRequest request) {
-        if (request == null) {
-            throw new ValidationException("Запрос на обновление данных фильма не может быть пустым");
-        }
+        validateRequest(request, "Запрос на обновление данных фильма не может быть пустым");
         if (request.hasReleaseDate()) {
             checkReleaseDate(request.getReleaseDate());
         }
         // Получаем объект по id запроса
         Film film = validationFilm(request.getId());
+        MotionPictureAssociation mpaRequest = request.getMpa();
+        MotionPictureAssociation mpa = validateAndGetMpa(mpaRequest);
         //Находим жанры принадлежавшие старому объекту Film
-        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(film.getMpa().getId());
-        if (mpaOpt.isEmpty()) {
-            throw new NotFoundException("Mpa для фильма в базе данных с id = " + film.getIdFilm() + "не найден");
-        }
-        MotionPictureAssociation mpa = mpaOpt.get();
         List<Genre> genresOldFilm = genreRepository.findGenresFilm(film.getIdFilm());
         if (genresOldFilm.isEmpty()) {
             throw new NotFoundException("Жанры для фильма в базе данных с id " + film.getIdFilm() + " не обнаружен");
         }
-        MotionPictureAssociation mpaRequest = request.getMpa();
-        if (mpaRequest == null) {
-            throw new ValidationException("Mpa в запросе на обновление данных фильма не может быть пустым");
-        }
         //Создаём новый объект
         Film newFilm = FilmMapper.updateFilmFields(film, request);
-        //проверяем Genre/Mpa
-        Optional<MotionPictureAssociation> mpaBD = mpaRepository.getMpa(mpaRequest.getId());
-        if (mpaBD.isEmpty()) {
-            throw new NotFoundException("Mpa в базе данных не найдено");
-        }
         Set<Genre> validGenreUpdate = validationGenres(newFilm.getGenres());
         newFilm.setGenres(validGenreUpdate);
+        newFilm.setMpa(mpa);
         filmRepository.update(newFilm);
         // Удаляем старые связи
         deleteGenreBD(film, genresOldFilm);
-        //Добавляем в таблицу связей пары фильм - жанр/рейтинг
+        //Добавляем в таблицу связей пары фильм - жанр
         for (Genre genre : validGenreUpdate) {
             Long id = genre.getId();
             addGenres(newFilm.getIdFilm(), id);
@@ -215,6 +183,21 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден");
         }
         return filmOpt.get();
+    }
+
+    private void validateRequest(Object request, String message) {
+        if (request == null) {
+            throw new ValidationException(message);
+        }
+    }
+
+    private MotionPictureAssociation validateAndGetMpa(MotionPictureAssociation mpa) {
+        validateRequest(mpa, "Mpa в запросе не может быть пустым");
+        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(mpa.getId());
+        if (mpaOpt.isEmpty()) {
+            throw new NotFoundException("Mpa с id = " + mpa.getId() + " не найден");
+        }
+        return mpaOpt.get();
     }
 
     private Set<Genre> validationGenres(Set<Genre> genres) {
