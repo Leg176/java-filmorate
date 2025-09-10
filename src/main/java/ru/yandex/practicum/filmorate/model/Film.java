@@ -30,9 +30,7 @@ public class Film {
     @NonNull
     @Min(value = 1, message = "Длительность фильма должна быть положительной")
     private Integer duration;
-    @NonNull
-    @Min(value = 1, message = "Число должно быть положительным")
-    private Long idMpa;
+
     private MotionPictureAssociation mpa;
     private Set<Genre> genres = new HashSet<>();
     private Set<Long> likes = new HashSet<>();

@@ -80,7 +80,7 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден");
         }
         Film film = filmOpt.get();
-        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(film.getIdMpa());
+        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(film.getMpa().getId());
         if (mpaOpt.isEmpty()) {
             throw new NotFoundException("Mpa в базе данных не найдено");
         }
@@ -135,7 +135,7 @@ public class FilmService {
         // Получаем объект по id запроса
         Film film = validationFilm(request.getId());
         //Находим жанры принадлежавшие старому объекту Film
-        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(film.getIdMpa());
+        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(film.getMpa().getId());
         if (mpaOpt.isEmpty()) {
             throw new NotFoundException("Mpa для фильма в базе данных с id = " + film.getIdFilm() + "не найден");
         }
