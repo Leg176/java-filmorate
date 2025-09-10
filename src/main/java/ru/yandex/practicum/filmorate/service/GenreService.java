@@ -1,34 +1,31 @@
-package ru.yandex.practicum.filmorate.serviceBD;
+package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.GenreRepository;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
-public class GenreServiceBD {
+public class GenreService {
     private final GenreRepository genreRepository;
 
     @Autowired
-    public GenreServiceBD(GenreRepository genreRepository) {
+    public GenreService(GenreRepository genreRepository) {
         this.genreRepository = genreRepository;
     }
 
     public Genre getGenre(Long idGenre) {
-
-        if (idGenre <= 0) {
-            throw new ValidationException("id не может быть отрицательными или равными 0");
-        }
-        if (genreRepository.getGenre(idGenre).isEmpty()) {
+        Optional<Genre> genre = genreRepository.getGenre(idGenre);
+        if (genre.isEmpty()) {
             throw new NotFoundException("Жанр не обнаружен");
         }
-        return genreRepository.getGenre(idGenre).get();
+        return genre.get();
     }
 
     public List<Genre> getAllGenre() {
@@ -36,9 +33,6 @@ public class GenreServiceBD {
     }
 
     public List<Genre> getGenresByIdFilm(Long idFilm) {
-        if (idFilm <= 0) {
-            throw new ValidationException("id не может быть отрицательными или равными 0");
-        }
         return genreRepository.findGenresFilm(idFilm);
     }
 }

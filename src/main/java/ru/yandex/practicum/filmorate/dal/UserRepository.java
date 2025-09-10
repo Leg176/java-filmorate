@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.dal;
 
+import jakarta.persistence.EntityManager;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -12,6 +14,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Repository
 public class UserRepository extends BaseRepository<User> {
+
+    @Autowired
+    private EntityManager entityManager;
 
     private static final String FIND_ALL_FRIENDS_QUERY = "SELECT idUserFriends FROM Friends WHERE idUser = ?";
     private static final String FIND_ALL_QUERY = "SELECT * FROM Users";
@@ -25,9 +30,19 @@ public class UserRepository extends BaseRepository<User> {
     private static final String DELETE_FRIEND_QUERY = "DELETE FROM Friends WHERE idUser = ? AND idUserFriends = ?";
     private static final String UPDATE_QUERY = "UPDATE Users SET email = ?, login = ?, name = ?, birthday = ?" +
             " WHERE idUser = ?";
+    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM Friends f WHERE f.idUser = :idUser " +
+            "AND f.idUserFriends = :idUserFriends";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
+    }
+
+    public boolean existsFriendship(Long idUser, Long idUserFriends) {
+        long count = (long) entityManager.createNativeQuery(FIND_FRIENDSHIP, Long.class)
+                .setParameter("idUser", idUser)
+                .setParameter("idUserFriends", idUserFriends)
+                .getSingleResult();
+        return count > 0;
     }
 
     public List<User> findAll() {

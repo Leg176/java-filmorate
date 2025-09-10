@@ -9,7 +9,6 @@ import java.sql.SQLException;
 
 @Component
 public class MpaRowMapper implements RowMapper<MotionPictureAssociation> {
-
     @Override
     public MotionPictureAssociation mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         MotionPictureAssociation mpa = new MotionPictureAssociation();

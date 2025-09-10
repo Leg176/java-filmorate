@@ -1,12 +1,13 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.serviceBD.GenreServiceBD;
+import ru.yandex.practicum.filmorate.service.GenreService;
 
 import java.util.Collection;
 
@@ -14,20 +15,20 @@ import java.util.Collection;
 @RequestMapping("/genres")
 public class GenresController {
 
-    private final GenreServiceBD genreServiceBD;
+    private final GenreService genreService;
 
     @Autowired
-    public GenresController(GenreServiceBD genreServiceBD) {
-        this.genreServiceBD = genreServiceBD;
+    public GenresController(GenreService genreService) {
+        this.genreService = genreService;
     }
 
     @GetMapping
     public Collection<Genre> findAll() {
-        return genreServiceBD.getAllGenre();
+        return genreService.getAllGenre();
     }
 
     @GetMapping("/{id}")
-    public Genre getGenre(@PathVariable Long id) {
-        return genreServiceBD.getGenre(id);
+    public Genre getGenre(@PathVariable @Positive(message = "id должен быть больше 0") Long id) {
+        return genreService.getGenre(id);
     }
 }

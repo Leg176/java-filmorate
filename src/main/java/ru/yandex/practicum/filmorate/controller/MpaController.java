@@ -1,12 +1,13 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
-import ru.yandex.practicum.filmorate.serviceBD.MpaServiceBD;
+import ru.yandex.practicum.filmorate.service.MpaService;
 
 import java.util.Collection;
 
@@ -14,20 +15,20 @@ import java.util.Collection;
 @RequestMapping("/mpa")
 public class MpaController {
 
-    private final MpaServiceBD mpaServiceBD;
+    private final MpaService mpaService;
 
     @Autowired
-    public MpaController(MpaServiceBD mpaServiceBD) {
-        this.mpaServiceBD = mpaServiceBD;
+    public MpaController(MpaService mpaService) {
+        this.mpaService = mpaService;
     }
 
     @GetMapping
     public Collection<MotionPictureAssociation> findAll() {
-        return mpaServiceBD.getAllMpa();
+        return mpaService.getAllMpa();
     }
 
     @GetMapping("/{id}")
-    public MotionPictureAssociation getMpa(@PathVariable Long id) {
-        return mpaServiceBD.getMpa(id);
+    public MotionPictureAssociation getMpa(@PathVariable @Positive(message = "id должен быть больше 0") Long id) {
+        return mpaService.getMpa(id);
     }
 }
