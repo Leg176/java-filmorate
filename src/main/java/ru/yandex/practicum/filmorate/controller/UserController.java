@@ -1,15 +1,16 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
+import ru.yandex.practicum.filmorate.dto.user.UserDto;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/users")
@@ -23,43 +24,47 @@ public class UserController {
     }
 
     @GetMapping
-    public Collection<User> findAll() {
-        return userService.findAll();
+    public Collection<UserDto> findAll() {
+        return userService.getUsers();
     }
 
     @PostMapping
-    public User create(@Valid @RequestBody User user) {
-        return userService.create(user);
+    public UserDto create(@Valid @RequestBody NewUserRequest userRequest) {
+        return userService.createUser(userRequest);
     }
 
     @PutMapping
-    public User update(@Valid @RequestBody User newUser) {
-        return userService.update(newUser);
+    public UserDto update(@Valid @RequestBody UpdateUserRequest request) {
+        return userService.updateUser(request);
     }
 
     @GetMapping("/{id}")
-    public Optional<User> getUser(@PathVariable Long id) {
-        return userService.getUser(id);
+    public UserDto getUser(@PathVariable @Positive(message = "id должен быть больше 0") Long id) {
+        return userService.getUserById(id);
     }
 
     @PutMapping("/{id}/friends/{friendId}")
-    public void addFriend(@PathVariable Long id, @PathVariable Long friendId) {
+    public void addFriend(@PathVariable @Positive(message = "id должен быть больше 0") Long id,
+                          @PathVariable @Positive(message = "friendId должен быть больше 0") Long friendId) {
         userService.addFriend(id, friendId);
     }
 
     @DeleteMapping("/{id}/friends/{friendId}")
-    public void removeFriend(@PathVariable @Min(1) Long id, @PathVariable @Min(1) Long friendId) {
-        userService.removeFriend(id, friendId);
+    public void removeFriend(@PathVariable @Positive(message = "id должен быть больше 0") Long id,
+                             @PathVariable @Positive(message = "friendId должен быть больше 0") Long friendId) {
+        userService.deleteFriend(id, friendId);
     }
 
     @GetMapping("/{id}/friends")
-    public List<User> findAllFriendsUser(@PathVariable @Min(1) Long id) {
-        return userService.findAllFriendsUser(id);
+    public List<UserDto> findAllFriendsUser(@PathVariable @Positive(message = "id должен быть больше 0") Long id) {
+        return userService.findAllFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherId}")
-    public List<User> findСommonFriendsUsers(@PathVariable @Min(1) Long id, @PathVariable @Min(1) Long otherId) {
-        return userService.findСommonFriendsUsers(id, otherId);
+    public List<UserDto> findCommonFriends(@PathVariable @Positive(message = "id должен быть больше 0") Long id,
+                                              @PathVariable @Positive(message = "otherId должен быть больше 0")
+                                              Long otherId) {
+        return userService.findCommonFriends(id, otherId);
 
     }
 }

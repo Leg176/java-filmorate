@@ -1,13 +1,27 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import lombok.NonNull;
+import java.util.Objects;
 
 @Data
 public class Genre {
-    private Long idGenre;
-    @NotBlank(message = "Название не может быть пустым")
-    @NonNull
+
+    private Long id;
     private String name;
+
+    public Genre() {
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Genre genre = (Genre) o;
+        return Objects.equals(id, genre.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

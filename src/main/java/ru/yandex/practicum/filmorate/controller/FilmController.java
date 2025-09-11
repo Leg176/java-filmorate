@@ -3,15 +3,18 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Positive;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
+import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
+@Slf4j
 @RestController
 @RequestMapping("/films")
 public class FilmController {
@@ -24,37 +27,46 @@ public class FilmController {
     }
 
     @GetMapping
-    public Collection<Film> findAll() {
-        return filmService.findAll();
+    public List<FilmDto> findAll() {
+        return filmService.getFilms();
     }
 
     @PostMapping
-    public Film create(@Valid @RequestBody Film film) {
-        return filmService.create(film);
+    public FilmDto create(@Valid @RequestBody NewFilmRequest newfilmRequest) {
+        return filmService.createFilm(newfilmRequest);
     }
 
     @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) {
-        return filmService.update(newFilm);
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest updatefilmRequest) {
+        return filmService.updateFilm(updatefilmRequest);
     }
 
     @GetMapping("/{id}")
-    public Optional<Film> getFilm(@PathVariable Long id) {
-        return filmService.getFilm(id);
+    public FilmDto getFilm(@PathVariable @Positive(message = "id должен быть больше 0") Long id) {
+        return filmService.getFilmById(id);
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLikes(@PathVariable Long id, @PathVariable Long userId) {
+    public void addLikes(@PathVariable
+                         @Positive(message = "id должен быть больше 0")
+                         Long id,
+                         @PathVariable
+                         @Positive(message = "userId должен быть больше 0")
+                         Long userId) {
         filmService.addLikes(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void delLikes(@PathVariable Long id, @PathVariable Long userId) {
-        filmService.delLikes(id, userId);
+    public void delLikes(@PathVariable
+                         @Positive(message = "id должен быть больше 0")
+                         Long id,
+                         @Positive(message = "userId должен быть больше 0")
+                         @PathVariable Long userId) {
+        filmService.deleteLikes(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
+    public List<FilmDto> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
         return filmService.topFilms(count);
     }
 }
