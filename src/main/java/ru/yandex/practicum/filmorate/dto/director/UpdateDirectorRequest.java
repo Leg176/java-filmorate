@@ -7,7 +7,8 @@ import lombok.Data;
 @Data
 public class UpdateDirectorRequest {
 
-    public UpdateDirectorRequest() {}
+    public UpdateDirectorRequest() {
+    }
 
     @Min(value = 1, message = "Id не может быть меньше 1.")
     private Long id;

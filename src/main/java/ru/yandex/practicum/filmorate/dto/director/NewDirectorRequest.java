@@ -7,7 +7,8 @@ import lombok.NonNull;
 @Data
 public class NewDirectorRequest {
 
-    public NewDirectorRequest() {}
+    public NewDirectorRequest() {
+    }
 
     private Long id;
 
