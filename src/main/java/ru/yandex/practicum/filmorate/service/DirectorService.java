@@ -56,8 +56,8 @@ public class DirectorService {
         if (isLogin) {
             throw new ValidationException("Режиссёр с именем: " + request.getName() + "существует");
         }
-        Director updatedDirector = DirectorMapper.updateDirectorFields(directorRepository.getDirector(request.getId()).
-                get(), request);
+        Director updatedDirector = DirectorMapper.updateDirectorFields(directorRepository.getDirector(request.getId())
+                .get(), request);
         directorRepository.update(updatedDirector);
         return updatedDirector;
     }
