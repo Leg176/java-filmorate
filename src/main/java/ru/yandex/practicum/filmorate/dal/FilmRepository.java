@@ -5,22 +5,37 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
+
     private static final String FIND_ALL_QUERY = "SELECT * FROM Films";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM Films WHERE idFilm = ?";
     private static final String FIND_BY_NAME_FILM_QUERY = "SELECT * FROM Films WHERE nameFilm = ?";
-    private static final String INSERT_QUERY = "INSERT INTO Films(nameFilm, description, releaseDate, duration, idMpa) " +
-            "VALUES (?, ?, ?, ?, ?)";
-    private static final String UPDATE_QUERY = "UPDATE Films SET nameFilm = ?, description = ?, releaseDate = ?, " +
-            "duration = ?, idMpa = ? WHERE idFilm = ?";
-    private static final String FIND_TOP_FILMS_QUERY = "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate,"
-            + " f.duration, f.idMpa, mr.nameMpa AS mpa_name FROM Films f LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa"
-            + " INNER JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm"
-            + " ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.idFilm ORDER BY q.counter DESC LIMIT ?";
+
+    private static final String INSERT_QUERY =
+            "INSERT INTO Films(nameFilm, description, releaseDate, duration, idMpa) " +
+                    "VALUES (?, ?, ?, ?, ?)";
+
+    private static final String UPDATE_QUERY =
+            "UPDATE Films SET nameFilm = ?, description = ?, releaseDate = ?, " +
+                    "duration = ?, idMpa = ? WHERE idFilm = ?";
+
+    private static final String FIND_TOP_FILMS_QUERY =
+            "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa, " +
+                    "       mr.nameMpa AS mpa_name " +
+                    "FROM Films f " +
+                    "LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa " +
+                    "INNER JOIN (" +
+                    "   SELECT idFilm, COUNT(idUser) AS counter " +
+                    "   FROM Likes GROUP BY idFilm ORDER BY COUNT(idUser) DESC" +
+                    ") q ON q.idFilm = f.idFilm " +
+                    "ORDER BY q.counter DESC " +
+                    "LIMIT ?";
+
     private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM Likes l WHERE idFilm = ?";
     private static final String ADD_LIKE_QUERY = "INSERT INTO Likes(idFilm, idUser) VALUES (?, ?)";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM Likes WHERE idFilm = ? AND idUser = ?";
@@ -68,7 +83,9 @@ public class FilmRepository extends BaseRepository<Film> {
     }
 
     public Film save(Film film) {
-        long id = insert(INSERT_QUERY, "idFilm",
+        long id = insert(
+                INSERT_QUERY,
+                "idFilm",
                 film.getNameFilm(),
                 film.getDescription(),
                 film.getReleaseDate(),
@@ -90,5 +107,44 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getIdFilm()
         );
         return film;
+    }
+
+    public List<Film> findMostPopular(int count, Long genreId, Integer year) {
+        StringBuilder sub = new StringBuilder(
+                "SELECT f.idFilm, COUNT(l.idUser) AS counter " +
+                        "FROM Films f " +
+                        "LEFT JOIN Likes l ON f.idFilm = l.idFilm "
+        );
+
+        List<Object> args = new ArrayList<>();
+
+        if (genreId != null) {
+            sub.append("JOIN FilmGenres fg ON fg.idFilm = f.idFilm ");
+        }
+
+        sub.append("WHERE 1=1 ");
+
+        if (genreId != null) {
+            sub.append("AND fg.idGenre = ? ");
+            args.add(genreId);
+        }
+        if (year != null) {
+            sub.append("AND EXTRACT(YEAR FROM f.releaseDate) = ? ");
+            args.add(year);
+        }
+
+        sub.append("GROUP BY f.idFilm ")
+                .append("ORDER BY counter DESC ");
+
+        String sql =
+                "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa " +
+                        "FROM Films f " +
+                        "JOIN (" + sub + ") q ON q.idFilm = f.idFilm " +
+                        "ORDER BY q.counter DESC " +
+                        "LIMIT ?";
+
+        args.add(count);
+
+        return findMany(sql, args.toArray());
     }
 }
