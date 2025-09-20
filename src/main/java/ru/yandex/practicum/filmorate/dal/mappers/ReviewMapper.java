@@ -5,7 +5,9 @@ import ru.yandex.practicum.filmorate.dto.review.ReviewDto;
 import ru.yandex.practicum.filmorate.model.Review;
 
 public final class ReviewMapper {
-    private ReviewMapper() {}
+
+    private ReviewMapper() {
+    }
 
     public static Review mapToReview(NewReviewRequest req) {
         Review r = new Review();
