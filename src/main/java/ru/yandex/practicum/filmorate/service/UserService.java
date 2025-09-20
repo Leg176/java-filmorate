@@ -11,8 +11,12 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.feed.EventType;
+import ru.yandex.practicum.filmorate.model.feed.Operation;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -20,10 +24,12 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final FeedService feedService;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, FeedService feedService) {
         this.userRepository = userRepository;
+        this.feedService = feedService;
     }
 
     public UserDto createUser(NewUserRequest request) {
@@ -89,6 +95,8 @@ public class UserService {
             throw new ValidationException("Пользователи уже являются друзьями");
         }
         userRepository.addFriend(userId, friendId);
+
+        feedService.recordEvent(userId, EventType.FRIEND, Operation.ADD, friendId);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
@@ -96,6 +104,7 @@ public class UserService {
         validationUserIsEmpty(userId);
         validationUserIsEmpty(friendId);
         userRepository.deleteFriends(userId, friendId);
+        feedService.recordEvent(userId, EventType.FRIEND, Operation.REMOVE, friendId);
     }
 
     private void validationIdFriends(Long id1, Long id2) {

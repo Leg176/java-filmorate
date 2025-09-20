@@ -16,9 +16,16 @@ import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
+import ru.yandex.practicum.filmorate.model.feed.EventType;
+import ru.yandex.practicum.filmorate.model.feed.Operation;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -30,16 +37,21 @@ public class FilmService {
     private final UserRepository userRepository;
     private final MpaRepository mpaRepository;
     private final GenreRepository genreRepository;
+    private final FeedService feedService;
 
     private static final LocalDate FIRST_FILM_DATE = LocalDate.of(1895, 12, 25);
 
     @Autowired
-    public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
-                       UserRepository userRepository, MpaRepository mpaRepository) {
+    public FilmService(FilmRepository filmRepository,
+                       GenreRepository genreRepository,
+                       UserRepository userRepository,
+                       MpaRepository mpaRepository,
+                       FeedService feedService) {
         this.filmRepository = filmRepository;
         this.userRepository = userRepository;
         this.mpaRepository = mpaRepository;
         this.genreRepository = genreRepository;
+        this.feedService = feedService;
     }
 
     public FilmDto createFilm(NewFilmRequest request) {
@@ -111,24 +123,19 @@ public class FilmService {
         if (request.hasReleaseDate()) {
             checkReleaseDate(request.getReleaseDate());
         }
-        // Получаем объект по id запроса
         Film film = validationFilm(request.getId());
         MotionPictureAssociation mpaRequest = request.getMpa();
         MotionPictureAssociation mpa = validateAndGetMpa(mpaRequest);
-        //Находим жанры принадлежавшие старому объекту Film
         List<Genre> genresOldFilm = genreRepository.findGenresFilm(film.getIdFilm());
         if (genresOldFilm.isEmpty()) {
             throw new NotFoundException("Жанры для фильма в базе данных с id " + film.getIdFilm() + " не обнаружен");
         }
-        //Создаём новый объект
         Film newFilm = FilmMapper.updateFilmFields(film, request);
         Set<Genre> validGenreUpdate = validationGenres(newFilm.getGenres());
         newFilm.setGenres(validGenreUpdate);
         newFilm.setMpa(mpa);
         filmRepository.update(newFilm);
-        // Удаляем старые связи
         deleteGenreBD(film, genresOldFilm);
-        //Добавляем в таблицу связей пары фильм - жанр
         for (Genre genre : validGenreUpdate) {
             Long id = genre.getId();
             addGenres(newFilm.getIdFilm(), id);
@@ -145,11 +152,13 @@ public class FilmService {
     public void addLikes(Long idFilm, Long idUser) {
         validationInLikes(idFilm, idUser);
         filmRepository.addLike(idFilm, idUser);
+        feedService.recordEvent(idUser, EventType.LIKE, Operation.ADD, idFilm);
     }
 
     public void deleteLikes(Long idFilm, Long idUser) {
         validationInLikes(idFilm, idUser);
         filmRepository.deleteLike(idFilm, idUser);
+        feedService.recordEvent(idUser, EventType.LIKE, Operation.REMOVE, idFilm);
     }
 
     private void addGenres(Long idFilm, Long idGenre) {
@@ -205,19 +214,15 @@ public class FilmService {
             return new HashSet<>();
         }
 
-        // Извлекаем все ID жанров
         Set<Long> genreIds = genres.stream()
                 .map(Genre::getId)
                 .collect(Collectors.toSet());
 
-        // Получаем все жанры одним запросом
         List<Genre> foundGenres = genreRepository.findAllByIdInOrderById(genreIds);
 
-        // Создаем мапу для быстрого поиска
         Map<Long, Genre> genreMap = foundGenres.stream()
                 .collect(Collectors.toMap(Genre::getId, Function.identity()));
 
-        // Проверяем наличие всех жанров и собираем результат
         return genres.stream()
                 .map(Genre::getId)
                 .distinct()
