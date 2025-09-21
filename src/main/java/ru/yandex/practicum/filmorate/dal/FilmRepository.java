@@ -19,16 +19,21 @@ public class FilmRepository extends BaseRepository<Film> {
             "duration = ?, idMpa = ? WHERE idFilm = ?";
     private static final String FIND_TOP_FILMS_QUERY = "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate,"
             + " f.duration, f.idMpa, mr.nameMpa AS mpa_name FROM Films f LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa"
-            + " INNER JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm"
+            + " LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm"
             + " ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.idFilm ORDER BY q.counter DESC LIMIT ?";
     private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM Likes l WHERE idFilm = ?";
     private static final String ADD_LIKE_QUERY = "INSERT INTO Likes(idFilm, idUser) VALUES (?, ?)";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM Likes WHERE idFilm = ? AND idUser = ?";
+    private static final String DELETE_FILM_QUERY = "DELETE FROM Films WHERE idFilm = ?";
     private static final String ADD_GENRE_QUERY = "INSERT INTO FilmGenres(idFilm, idGenre) VALUES (?, ?)";
     private static final String DELETE_GENRE_QUERY = "DELETE FROM FilmGenres WHERE idFilm = ? AND idGenre = ?";
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
+    }
+
+    public void deleteFilm(long idFilm) {
+        jdbc.update(DELETE_FILM_QUERY, idFilm);
     }
 
     public void delGenre(Long idFilm, Long idGenre) {

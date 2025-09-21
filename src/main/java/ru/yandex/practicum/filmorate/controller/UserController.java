@@ -55,6 +55,11 @@ public class UserController {
         userService.deleteFriend(id, friendId);
     }
 
+    @DeleteMapping("/{userId}")
+    public void removeUser(@PathVariable @Positive(message = "id должен быть больше 0") Long userId) {
+        userService.deleteUser(userId);
+    }
+
     @GetMapping("/{id}/friends")
     public List<UserDto> findAllFriendsUser(@PathVariable @Positive(message = "id должен быть больше 0") Long id) {
         return userService.findAllFriends(id);

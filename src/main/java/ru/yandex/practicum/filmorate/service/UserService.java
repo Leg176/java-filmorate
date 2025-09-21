@@ -98,6 +98,11 @@ public class UserService {
         userRepository.deleteFriends(userId, friendId);
     }
 
+    public void deleteUser(Long userId) {
+        validationUserIsEmpty(userId);
+        userRepository.deleteUser(userId);
+    }
+
     private void validationIdFriends(Long id1, Long id2) {
         if (id1.equals(id2)) {
             throw new ValidationException("Нельзя удалить/добавить самого себя из друзей");

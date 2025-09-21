@@ -24,7 +24,6 @@ public class FilmMapper {
         film.setReleaseDate(request.getReleaseDate());
         film.setDuration(request.getDuration());
         film.setMpa(request.getMpa());
-        film.setMpa(request.getMpa());
         return film;
     }
 
@@ -37,6 +36,7 @@ public class FilmMapper {
         dto.setDuration(film.getDuration());
         dto.setMpa(film.getMpa());
         dto.setGenres(new HashSet<>(film.getGenres()));
+        dto.setLikes(film.getLikes());
         return dto;
     }
 

@@ -18,7 +18,6 @@ import java.util.Set;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FilmDto {
-
     public FilmDto() {
     }
 
@@ -44,4 +43,6 @@ public class FilmDto {
     private MotionPictureAssociation mpa;
 
     private Set<Genre> genres = new HashSet<>();
+
+    private Long likes;
 }
