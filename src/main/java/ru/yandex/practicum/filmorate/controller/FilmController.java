@@ -78,6 +78,7 @@ public class FilmController {
     @GetMapping("/common")
     public List<FilmDto> commonFilm(@RequestParam Long userId, @RequestParam Long friendId) {
         return filmService.getCommon(userId, friendId);
+    }
 
     @DeleteMapping("/{filmId}")
     public void removeFilm(@PathVariable @Positive(message = "id должен быть больше 0") Long filmId) {
