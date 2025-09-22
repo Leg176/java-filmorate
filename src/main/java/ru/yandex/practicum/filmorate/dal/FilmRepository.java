@@ -180,6 +180,7 @@ public class FilmRepository extends BaseRepository<Film> {
         );
         return film;
     }
+
     public List<Film> getCommon(Long userId, Long friendId) {
         return findMany(FIND_COMMON_FILMS, userId, friendId);
     }
