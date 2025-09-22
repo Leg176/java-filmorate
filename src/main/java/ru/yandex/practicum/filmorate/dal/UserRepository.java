@@ -28,6 +28,7 @@ public class UserRepository extends BaseRepository<User> {
     private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.idUserFriends FROM Friends f1 WHERE f1.idUser = ? " +
                     "AND f1.idUserFriends IN ( SELECT f2.idUserFriends FROM Friends f2 WHERE f2.idUser = ?)";
     private static final String DELETE_FRIEND_QUERY = "DELETE FROM Friends WHERE idUser = ? AND idUserFriends = ?";
+    private static final String DELETE_USER_QUERY = "DELETE FROM Users WHERE idUser = ?";
     private static final String UPDATE_QUERY = "UPDATE Users SET email = ?, login = ?, name = ?, birthday = ?" +
             " WHERE idUser = ?";
     private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM Friends f WHERE f.idUser = :idUser " +
@@ -63,6 +64,10 @@ public class UserRepository extends BaseRepository<User> {
 
     public void deleteFriends(long idUser, long friendId) {
         jdbc.update(DELETE_FRIEND_QUERY, idUser, friendId);
+    }
+
+    public void deleteUser(long idUser) {
+        jdbc.update(DELETE_USER_QUERY, idUser);
     }
 
     public List<User> findJointFriendsUsers(Long idUser, Long otherId) {

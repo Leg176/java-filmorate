@@ -17,9 +17,9 @@ public class GenreRepository extends BaseRepository<Genre> {
     private static final String FIND_GENRES_BY_ID_FILM_QUERY = "SELECT g.* FROM Genres g " +
             "INNER JOIN FilmGenres fg ON g.idGenre = fg.idGenre WHERE fg.idFilm = ?";
     private static final String FIND_BY_IDS_QUERY = "SELECT * FROM Genres WHERE idGenre IN (?)";
-    private static final String FIND_ALL_GENRES_FOR_ALL_FILMS = "SELECT DISTINCT fg.idFilm, g.idGenre, g.name FROM FilmGenres fg " +
-            "INNER JOIN Genres g ON fg.idGenre = g.idGenre WHERE fg.idFilm IN (%s) ORDER BY fg.idFilm";
-
+    private static final String FIND_ALL_GENRES_FOR_ALL_FILMS = "SELECT DISTINCT fg.idFilm, g.idGenre, " +
+            "g.name FROM FilmGenres fg INNER JOIN Genres g ON fg.idGenre = g.idGenre WHERE fg.idFilm " +
+            "IN (%s) ORDER BY fg.idFilm";
 
     public GenreRepository(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);
