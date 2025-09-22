@@ -69,4 +69,14 @@ public class FilmController {
     public List<FilmDto> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
         return filmService.topFilms(count);
     }
+
+    /**
+     * Метод для поиска фильмов по названию или режиссёру
+     */
+    @GetMapping("/search")
+    public List<FilmDto> searchFilms(
+            @RequestParam String query,
+            @RequestParam String by) {
+        return filmService.searchFilms(query, by);
+    }
 }

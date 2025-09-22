@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dal;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -8,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM Films";
@@ -26,6 +28,9 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String DELETE_LIKE_QUERY = "DELETE FROM Likes WHERE idFilm = ? AND idUser = ?";
     private static final String ADD_GENRE_QUERY = "INSERT INTO FilmGenres(idFilm, idGenre) VALUES (?, ?)";
     private static final String DELETE_GENRE_QUERY = "DELETE FROM FilmGenres WHERE idFilm = ? AND idGenre = ?";
+    private static final String SEARCH_FILMS_QUERY =
+            "SELECT f.* FROM Films f " +
+                    "WHERE (f.nameFilm ILIKE '%' || ? || '%' OR f.director ILIKE '%' || ? || '%')";
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
@@ -90,5 +95,13 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getIdFilm()
         );
         return film;
+    }
+
+    /**
+     * Метод для поиска фильмов по названию или режиссёру
+     */
+    public List<Film> searchFilms(String query, boolean byTitle, boolean byDirector) {
+        log.debug("Ищем фильмы по запросу '{}', byTitle: {}, byDirector: {}", query, byTitle, byDirector);
+        return findMany(SEARCH_FILMS_QUERY, query, query);
     }
 }

@@ -230,4 +230,23 @@ public class FilmService {
                 })
                 .collect(Collectors.toSet());
     }
+
+    /**
+     * Метод для поиска фильмов по названию или режиссёру
+     */
+    public List<FilmDto> searchFilms(String query, String by) {
+        log.info("Ищем фильмы по запросу '{}', параметр by: {}", query, by);
+
+        boolean searchByTitle = by.contains("title");
+        boolean searchByDirector = by.contains("director");
+
+        if (!searchByTitle && !searchByDirector) {
+            throw new IllegalArgumentException("Параметр 'by' должен содержать 'title' и/или 'director'");
+        }
+
+        return filmRepository.searchFilms(query, searchByTitle, searchByDirector)
+                .stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
 }
