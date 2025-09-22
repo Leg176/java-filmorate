@@ -1,18 +1,14 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.dto.review;
 
-import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-@Builder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Review {
-    private Long id;
-    @NotNull
+public class ReviewDto {
+    private Long reviewId;
     private String content;
     private Boolean isPositive;
     private Long userId;
