@@ -75,4 +75,9 @@ public class FilmController {
     public List<FilmDto> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
         return filmService.topFilms(count);
     }
+
+    @DeleteMapping("/{filmId}")
+    public void removeFilm(@PathVariable @Positive(message = "id должен быть больше 0") Long filmId) {
+        filmService.deleteFilm(filmId);
+    }
 }

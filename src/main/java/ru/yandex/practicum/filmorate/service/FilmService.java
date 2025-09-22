@@ -221,6 +221,11 @@ public class FilmService {
                 .forEach(id -> filmRepository.delGenre(film.getIdFilm(), id));
     }
 
+    public void deleteFilm(Long idFilm) {
+        validationFilm(idFilm);
+        filmRepository.deleteFilm(idFilm);
+    }
+
     private void checkReleaseDate(LocalDate localDate) {
         log.debug("Проверяем дату выхода фильма");
         if (!localDate.isAfter(FIRST_FILM_DATE)) {

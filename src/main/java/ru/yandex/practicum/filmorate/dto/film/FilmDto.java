@@ -19,7 +19,6 @@ import java.util.Set;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FilmDto {
-
     public FilmDto() {
     }
 
