@@ -32,6 +32,21 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String LIKES_QUERY = "SELECT idFilm, COUNT(*) as likesCount FROM Likes WHERE idFilm IN (";
     private static final String ADD_GENRE_QUERY = "INSERT INTO FilmGenres(idFilm, idGenre) VALUES (?, ?)";
     private static final String DELETE_GENRE_QUERY = "DELETE FROM FilmGenres WHERE idFilm = ? AND idGenre = ?";
+    private static final String FIND_COMMON_FILMS = """
+            SELECT сf.*
+            FROM (SELECT f.*, mr.namempa
+            	FROM likes l1
+            	INNER JOIN films f ON f.idFilm = l1.idFilm
+            	LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa
+            	INNER JOIN likes l2 ON l2.idFilm = l1.idFilm
+                            AND l2.idUser = ?
+                            WHERE l1.idUser = ?) сf
+            	INNER JOIN (
+            		SELECT l.idFilm, count(l.idUser) AS cnt
+                            FROM likes l
+                            GROUP BY l.idFilm) сl ON сl.idFilm = сf.idFilm
+            ORDER BY сl.cnt desc
+            """;
     private static final String ADD_DIRECTOR_QUERY = "INSERT INTO FilmDirectors(idFilm, idDirector) VALUES (?, ?)";
     private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM FilmDirectors WHERE idFilm = ? AND idDirector = ?";
     private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON " +
@@ -148,5 +163,9 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getIdFilm()
         );
         return film;
+    }
+
+    public List<Film> getCommon(Long userId, Long friendId) {
+        return findMany(FIND_COMMON_FILMS, userId, friendId);
     }
 }

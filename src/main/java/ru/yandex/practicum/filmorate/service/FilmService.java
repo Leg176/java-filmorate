@@ -317,4 +317,24 @@ public class FilmService {
                 })
                 .collect(Collectors.toSet());
     }
+
+    public List<FilmDto> getCommon(Long userId, Long friendId) {
+        List<Film> commonFilms = filmRepository.getCommon(userId, friendId);
+        List<Long> ids = commonFilms.stream()
+                .map(Film::getIdFilm)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
+        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
+
+        for (Film film : commonFilms) {
+            film.setMpa(mpaMap.get(film.getIdFilm()));
+            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+        }
+
+        return commonFilms.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
 }
