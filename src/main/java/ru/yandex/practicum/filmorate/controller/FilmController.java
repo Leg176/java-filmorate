@@ -30,6 +30,12 @@ public class FilmController {
         return filmService.getFilms();
     }
 
+    @GetMapping("/director/{directorId}")
+    public List<FilmDto> getFilmsByDirector(@PathVariable Long directorId,
+                                            @RequestParam(defaultValue = "year") String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
     @PostMapping
     public FilmDto create(@Valid @RequestBody NewFilmRequest newfilmRequest) {
         return filmService.createFilm(newfilmRequest);
@@ -72,5 +78,9 @@ public class FilmController {
     @GetMapping("/common")
     public List<FilmDto> commonFilm(@RequestParam Long userId, @RequestParam Long friendId) {
         return filmService.getCommon(userId, friendId);
+
+    @DeleteMapping("/{filmId}")
+    public void removeFilm(@PathVariable @Positive(message = "id должен быть больше 0") Long filmId) {
+        filmService.deleteFilm(filmId);
     }
 }

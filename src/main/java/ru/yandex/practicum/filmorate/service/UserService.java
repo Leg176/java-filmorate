@@ -62,7 +62,7 @@ public class UserService {
         validationUserIsEmpty(request.getId());
 
         boolean isLogin = userRepository.findAll().stream()
-                .filter(user -> user.getIdUser().equals(request.getId()))
+                .filter(user -> !user.getIdUser().equals(request.getId()))
                 .map(User::getLogin)
                 .anyMatch(login -> login.equals(request.getLogin()));
         if (isLogin) {
@@ -96,6 +96,11 @@ public class UserService {
         validationUserIsEmpty(userId);
         validationUserIsEmpty(friendId);
         userRepository.deleteFriends(userId, friendId);
+    }
+
+    public void deleteUser(Long userId) {
+        validationUserIsEmpty(userId);
+        userRepository.deleteUser(userId);
     }
 
     private void validationIdFriends(Long id1, Long id2) {

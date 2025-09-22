@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.dto.film;
 
 import jakarta.validation.constraints.*;
 import lombok.Data;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
 
@@ -23,7 +24,6 @@ public class UpdateFilmRequest {
     @Size(max = 200, message = "Описание не должно превышать 200 символов")
     private String description;
 
-    @PastOrPresent
     private LocalDate releaseDate;
 
     private Integer duration;
@@ -31,6 +31,8 @@ public class UpdateFilmRequest {
     private MotionPictureAssociation mpa;
 
     private Set<Genre> genres;
+
+    private Set<Director> directors;
 
     public boolean hasNameFilm() {
         return !name.isBlank();
@@ -54,5 +56,9 @@ public class UpdateFilmRequest {
 
     public boolean hasGenres() {
         return genres != null;
+    }
+
+    public boolean hasDirector() {
+        return directors != null;
     }
 }
