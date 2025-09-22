@@ -50,7 +50,7 @@ public class DirectorService {
         validationDirectorIsEmpty(request.getId());
 
         boolean isLogin = directorRepository.getAllDirector().stream()
-                .filter(director -> director.getId().equals(request.getId()))
+                .filter(director -> !director.getId().equals(request.getId()))
                 .map(Director::getName)
                 .anyMatch(firstName -> firstName.equals(request.getName()));
         if (isLogin) {

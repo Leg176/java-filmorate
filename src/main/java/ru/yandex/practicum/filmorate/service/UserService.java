@@ -62,7 +62,7 @@ public class UserService {
         validationUserIsEmpty(request.getId());
 
         boolean isLogin = userRepository.findAll().stream()
-                .filter(user -> user.getIdUser().equals(request.getId()))
+                .filter(user -> !user.getIdUser().equals(request.getId()))
                 .map(User::getLogin)
                 .anyMatch(login -> login.equals(request.getLogin()));
         if (isLogin) {
