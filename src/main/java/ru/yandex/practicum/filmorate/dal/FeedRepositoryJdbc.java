@@ -26,7 +26,8 @@ public class FeedRepositoryJdbc extends BaseRepository<FeedEvent> implements Fee
             "SELECT e.idEvent, e.ts, e.idUser, e.eventType, e.operation, e.entityId " +
                     "FROM FEED_EVENTS e " +
                     "JOIN Friends f ON f.idUserFriends = e.idUser " +
-                    "WHERE f.idUser = ? ORDER BY e.ts ASC, e.idEvent ASC";
+                    "WHERE f.idUser = ? " +
+                    "ORDER BY e.ts ASC, e.idEvent ASC";
 
     private static final String SELECT_OWN_AND_FRIENDS =
             "SELECT idEvent, ts, idUser, eventType, operation, entityId FROM (" +
