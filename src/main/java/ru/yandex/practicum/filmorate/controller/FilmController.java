@@ -52,27 +52,27 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLikes(@PathVariable
-                         @Positive(message = "id должен быть больше 0")
-                         Long id,
-                         @PathVariable
-                         @Positive(message = "userId должен быть больше 0")
-                         Long userId) {
+    public void addLikes(@PathVariable @Positive(message = "id должен быть больше 0") Long id,
+                         @PathVariable @Positive(message = "userId должен быть больше 0") Long userId) {
         filmService.addLikes(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void delLikes(@PathVariable
-                         @Positive(message = "id должен быть больше 0")
-                         Long id,
-                         @Positive(message = "userId должен быть больше 0")
-                         @PathVariable Long userId) {
+    public void delLikes(@PathVariable @Positive(message = "id должен быть больше 0") Long id,
+                         @PathVariable @Positive(message = "userId должен быть больше 0") Long userId) {
         filmService.deleteLikes(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<FilmDto> topFilms(@RequestParam(defaultValue = "10") @Min(1) Integer count) {
-        return filmService.topFilms(count);
+    public List<FilmDto> popular(@RequestParam(defaultValue = "10") @Min(1) Integer count,
+                                 @RequestParam(required = false)
+                                 @Positive(message = "genreId должен быть больше 0") Long genreId,
+                                 @RequestParam(required = false)
+                                 @Min(value = 1, message = "year должен быть положительным") Integer year) {
+        if (genreId == null && year == null) {
+            return filmService.topFilms(count);
+        }
+        return filmService.getMostPopular(count, genreId, year);
     }
 
     @GetMapping("/common")

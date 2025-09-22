@@ -90,8 +90,7 @@ public class FilmService {
         filmRepository.save(film);
         log.info("Фильм сохранен с ID: {}", film.getIdFilm());
         for (Genre genre : film.getGenres()) {
-            Long id = genre.getId();
-            addGenres(film.getIdFilm(), id);
+            addGenres(film.getIdFilm(), genre.getId());
         }
         for (Director director : film.getDirector()) {
             Long id = director.getId();
@@ -116,10 +115,10 @@ public class FilmService {
 
     public List<FilmDto> getFilms() {
         try {
-            List<Film> films = filmRepository.findAll();
-            if (films.isEmpty()) {
-                return Collections.emptyList();
-            }
+        List<Film> films = filmRepository.findAll();
+        if (films.isEmpty()) {
+            return Collections.emptyList();
+        }
 
             List<Long> ids = films.stream()
                     .map(Film::getIdFilm)
@@ -152,8 +151,8 @@ public class FilmService {
         }
         // Получаем объект по id запроса
         Film film = validationFilm(request.getId());
-        MotionPictureAssociation mpaRequest = request.getMpa();
-        MotionPictureAssociation mpa = validateAndGetMpa(mpaRequest);
+        MotionPictureAssociation mpa = validateAndGetMpa(request.getMpa());
+
         //Находим жанры принадлежавшие старому объекту Film
         List<Genre> genresOldFilm = genreRepository.findGenresFilm(film.getIdFilm());
         if (genresOldFilm.isEmpty()) {
@@ -168,14 +167,13 @@ public class FilmService {
         Set<Director> validDirectorUpdate = validationDirector(newFilm.getDirector());
         newFilm.setDirector(validDirectorUpdate);
         newFilm.setMpa(mpa);
+
         filmRepository.update(newFilm);
         // Удаляем старые связи
         deleteGenreBD(film, genresOldFilm);
-        deleteDirectorBD(film, directorOldFilm);
         //Добавляем в таблицу связей пары фильм - жанр
-        for (Genre genre : validGenreUpdate) {
-            Long id = genre.getId();
-            addGenres(newFilm.getIdFilm(), id);
+        for (Genre g : validGenreUpdate) {
+            addGenres(newFilm.getIdFilm(), g.getId());
         }
         //Добавляем в таблицу связей пары фильм - режиссёр
         for (Director director : validDirectorUpdate) {
@@ -189,6 +187,23 @@ public class FilmService {
         return filmRepository.findTopFilm(count).stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
+    }
+
+    public List<FilmDto> getMostPopular(Integer count, Long genreId, Integer year) {
+        int limit = (count == null || count <= 0) ? 10 : count;
+        List<Film> films = filmRepository.findMostPopular(limit, genreId, year);
+        if (films.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Long> ids = films.stream().map(Film::getIdFilm).distinct().toList();
+        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
+        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
+        for (Film f : films) {
+            f.setMpa(mpaMap.get(f.getIdFilm()));
+            f.setGenres(genreMap.getOrDefault(f.getIdFilm(), new HashSet<>()));
+        }
+        return films.stream().map(FilmMapper::mapToFilmDto).toList();
     }
 
     public void addLikes(Long idFilm, Long idUser) {
@@ -242,11 +257,8 @@ public class FilmService {
     }
 
     private Film validationFilm(Long idFilm) {
-        Optional<Film> filmOpt = filmRepository.getFilm(idFilm);
-        if (filmOpt.isEmpty()) {
-            throw new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден");
-        }
-        return filmOpt.get();
+        return filmRepository.getFilm(idFilm)
+                .orElseThrow(() -> new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден"));
     }
 
     private void validateRequest(Object request, String message) {
@@ -257,11 +269,8 @@ public class FilmService {
 
     private MotionPictureAssociation validateAndGetMpa(MotionPictureAssociation mpa) {
         validateRequest(mpa, "Mpa в запросе не может быть пустым");
-        Optional<MotionPictureAssociation> mpaOpt = mpaRepository.getMpa(mpa.getId());
-        if (mpaOpt.isEmpty()) {
-            throw new NotFoundException("Mpa с id = " + mpa.getId() + " не найден");
-        }
-        return mpaOpt.get();
+        return mpaRepository.getMpa(mpa.getId())
+                .orElseThrow(() -> new NotFoundException("Mpa с id = " + mpa.getId() + " не найден"));
     }
 
     private Set<Director> validationDirector(Set<Director> directors) {

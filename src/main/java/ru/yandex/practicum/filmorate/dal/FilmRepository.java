@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
 
+
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
     }
@@ -18,14 +19,23 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM Films";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM Films WHERE idFilm = ?";
     private static final String FIND_BY_NAME_FILM_QUERY = "SELECT * FROM Films WHERE nameFilm = ?";
-    private static final String INSERT_QUERY = "INSERT INTO Films(nameFilm, description, releaseDate, duration, idMpa) " +
-            "VALUES (?, ?, ?, ?, ?)";
-    private static final String UPDATE_QUERY = "UPDATE Films SET nameFilm = ?, description = ?, releaseDate = ?, " +
-            "duration = ?, idMpa = ? WHERE idFilm = ?";
-    private static final String FIND_TOP_FILMS_QUERY = "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate,"
-            + " f.duration, f.idMpa, mr.nameMpa AS mpa_name FROM Films f LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa"
-            + " LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm"
-            + " ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.idFilm ORDER BY q.counter DESC LIMIT ?";
+
+    private static final String INSERT_QUERY =
+            "INSERT INTO Films(nameFilm, description, releaseDate, duration, idMpa) VALUES (?, ?, ?, ?, ?)";
+
+    private static final String UPDATE_QUERY =
+            "UPDATE Films SET nameFilm = ?, description = ?, releaseDate = ?, duration = ?, idMpa = ? WHERE idFilm = ?";
+
+    private static final String FIND_TOP_FILMS_QUERY =
+            "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa, " +
+                    "       mr.nameMpa AS mpa_name " +
+                    "FROM Films f " +
+                    "LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa " +
+                    "INNER JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm " +
+                    "            ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.idFilm " +
+                    "ORDER BY q.counter DESC LIMIT ?";
+
+    private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM Likes l WHERE idFilm = ?";
     private static final String ADD_LIKE_QUERY = "INSERT INTO Likes(idFilm, idUser) VALUES (?, ?)";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM Likes WHERE idFilm = ? AND idUser = ?";
     private static final String DELETE_FILM_QUERY = "DELETE FROM Films WHERE idFilm = ?";
@@ -124,6 +134,10 @@ public class FilmRepository extends BaseRepository<Film> {
         jdbc.update(DELETE_LIKE_QUERY, idFilm, idUser);
     }
 
+    public List<Long> findAllLikesFilm(Long idFilm) {
+        return jdbc.queryForList(FIND_LIKES_QUERY, Long.class, idFilm);
+    }
+
     public List<Film> findAll() {
         return findMany(FIND_ALL_QUERY);
     }
@@ -141,7 +155,9 @@ public class FilmRepository extends BaseRepository<Film> {
     }
 
     public Film save(Film film) {
-        long id = insert(INSERT_QUERY, "idFilm",
+        long id = insert(
+                INSERT_QUERY,
+                "idFilm",
                 film.getNameFilm(),
                 film.getDescription(),
                 film.getReleaseDate(),
@@ -167,5 +183,34 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getCommon(Long userId, Long friendId) {
         return findMany(FIND_COMMON_FILMS, userId, friendId);
+    }
+
+    public List<Film> findMostPopular(int limit, Long genreId, Integer year) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa " +
+                        "FROM Films f " +
+                        "LEFT JOIN Likes l ON l.idFilm = f.idFilm " +
+                        "LEFT JOIN FilmGenres fg ON fg.idFilm = f.idFilm " +
+                        "WHERE 1=1 "
+        );
+
+        List<Object> params = new ArrayList<>();
+
+        if (genreId != null) {
+            sql.append("AND fg.idGenre = ? ");
+            params.add(genreId);
+        }
+        if (year != null) {
+            sql.append("AND EXTRACT(YEAR FROM f.releaseDate) = ? ");
+            params.add(year);
+        }
+
+        sql.append("GROUP BY f.idFilm ")
+                .append("ORDER BY COUNT(l.idUser) DESC ")
+                .append("LIMIT ?");
+
+        params.add(limit);
+
+        return findMany(sql.toString(), params.toArray());
     }
 }
