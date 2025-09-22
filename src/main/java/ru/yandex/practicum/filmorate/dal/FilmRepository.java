@@ -5,11 +5,16 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
+
+    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
+        super(jdbc, mapper);
+    }
+
     private static final String FIND_ALL_QUERY = "SELECT * FROM Films";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM Films WHERE idFilm = ?";
     private static final String FIND_BY_NAME_FILM_QUERY = "SELECT * FROM Films WHERE nameFilm = ?";
@@ -21,14 +26,66 @@ public class FilmRepository extends BaseRepository<Film> {
             + " f.duration, f.idMpa, mr.nameMpa AS mpa_name FROM Films f LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa"
             + " INNER JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm"
             + " ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.idFilm ORDER BY q.counter DESC LIMIT ?";
-    private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM Likes l WHERE idFilm = ?";
     private static final String ADD_LIKE_QUERY = "INSERT INTO Likes(idFilm, idUser) VALUES (?, ?)";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM Likes WHERE idFilm = ? AND idUser = ?";
+    private static final String LIKES_QUERY = "SELECT idFilm, COUNT(*) as likesCount FROM Likes WHERE idFilm IN (";
     private static final String ADD_GENRE_QUERY = "INSERT INTO FilmGenres(idFilm, idGenre) VALUES (?, ?)";
     private static final String DELETE_GENRE_QUERY = "DELETE FROM FilmGenres WHERE idFilm = ? AND idGenre = ?";
+    private static final String ADD_DIRECTOR_QUERY = "INSERT INTO FilmDirectors(idFilm, idDirector) VALUES (?, ?)";
+    private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM FilmDirectors WHERE idFilm = ? AND idDirector = ?";
+    private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON " +
+            "f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
 
-    public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
-        super(jdbc, mapper);
+    public List<Film> findFilmsByDirector(Long directorId, String sortBy) {
+
+        List<Film> films = findMany(FIND_BY_DIRECTOR_QUERY, directorId);
+        countLikesForFilms(films);
+
+        return films.stream()
+                .sorted((f1, f2) -> {
+                    if ("year".equalsIgnoreCase(sortBy)) {
+                        return f1.getReleaseDate().compareTo(f2.getReleaseDate());
+                    } else if ("likes".equalsIgnoreCase(sortBy)) {
+                        return Long.compare(f2.getLikes(), f1.getLikes()); // DESC
+                    } else {
+                        return f1.getReleaseDate().compareTo(f2.getReleaseDate()); // по умолчанию
+                    }
+                })
+                .collect(Collectors.toList());
+    }
+
+    public void countLikesForFilms(List<Film> films) {
+        if (films.isEmpty()) return;
+        // Собираем все id фильмов
+        List<Long> filmIds = films.stream()
+                .map(Film::getIdFilm)
+                .toList();
+        // Получаем все лайки для этих фильмов
+        String placeholders = String.join(",", Collections.nCopies(filmIds.size(), "?"));
+        String query = LIKES_QUERY + placeholders + ") GROUP BY idFilm";
+        // Получаем все лайки
+        List<Object[]> likesData = jdbc.query(query, filmIds.toArray(new Long[0]),
+                (rs, rowNum) -> new Object[]{
+                        rs.getLong("idFilm"),
+                        rs.getLong("likesCount")
+                });
+        // Создаем мапу лайков
+        Map<Long, Long> likesMap = new HashMap<>();
+        for (Object[] row : likesData) {
+            likesMap.put((Long) row[0], (Long) row[1]);
+        }
+        // Заполняем лайки в объектах Film
+        for (Film film : films) {
+            film.setLikes(likesMap.getOrDefault(film.getIdFilm(), 0L));
+        }
+    }
+
+    public void addDirector(Long idFilm, Long idDirector) {
+        insert(ADD_DIRECTOR_QUERY, "idFilm", idFilm, idDirector);
+    }
+
+    public void delDirector(Long idFilm, Long idDirector) {
+        jdbc.update(DELETE_DIRECTOR_QUERY, idFilm, idDirector);
     }
 
     public void delGenre(Long idFilm, Long idGenre) {
@@ -45,10 +102,6 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public void deleteLike(Long idFilm, Long idUser) {
         jdbc.update(DELETE_LIKE_QUERY, idFilm, idUser);
-    }
-
-    public List<Long> findAllLikesFilm(Long idFilm) {
-        return jdbc.queryForList(FIND_LIKES_QUERY, Long.class, idFilm);
     }
 
     public List<Film> findAll() {

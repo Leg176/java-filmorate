@@ -45,7 +45,6 @@ public class MpaRepository extends BaseRepository<MotionPictureAssociation> {
                 new String[filmIds.size()]).replace("null", "?");
         String sql = String.format(FIND_ALL_MPA_FOR_ALL_FILMS, placeholders);
 
-
         List<Object[]> results = jdbc.query(
                 sql,
                 filmIds.toArray(),

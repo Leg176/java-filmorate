@@ -8,6 +8,7 @@ import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NonNull;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
 
@@ -44,4 +45,8 @@ public class FilmDto {
     private MotionPictureAssociation mpa;
 
     private Set<Genre> genres = new HashSet<>();
+
+    private Set<Director> directors = new HashSet<>();
+
+    private Long likes;
 }

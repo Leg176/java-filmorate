@@ -6,6 +6,7 @@ import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NonNull;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
 
@@ -33,4 +34,6 @@ public class NewFilmRequest {
     private MotionPictureAssociation mpa;
 
     private Set<Genre> genres;
+
+    private Set<Director> directors;
 }
