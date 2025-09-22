@@ -230,4 +230,12 @@ public class FilmService {
                 })
                 .collect(Collectors.toSet());
     }
+
+    /**
+     * Метод для получения списка фильмов, которые пользователь поставил в лайки
+     */
+    public List<Long> getLikedFilmsByUserId(Long userId) {
+        log.info("Получаем список фильмов, которые пользователь с ID: {} поставил в лайки", userId);
+        return filmRepository.findAllLikesFilm(userId);
+    }
 }

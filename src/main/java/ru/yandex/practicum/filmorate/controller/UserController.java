@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
@@ -66,5 +67,13 @@ public class UserController {
                                               Long otherId) {
         return userService.findCommonFriends(id, otherId);
 
+    }
+
+    /**
+     * Метод для получения рекомендаций фильмов пользователю
+     */
+    @GetMapping("/{id}/recommendations")
+    public List<FilmDto> getRecommendations(@PathVariable @Positive(message = "id должен быть больше 0") Long id) {
+        return userService.getRecommendations(id);
     }
 }

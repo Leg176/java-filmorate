@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.user.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.user.UserDto;
@@ -20,10 +21,12 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final FilmService filmService;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, FilmService filmService) {
         this.userRepository = userRepository;
+        this.filmService = filmService;
     }
 
     public UserDto createUser(NewUserRequest request) {
@@ -118,5 +121,59 @@ public class UserService {
         if (alreadyExistUser.isPresent()) {
             throw new ValidationException("Пользователь с таким имейл уже существует");
         }
+    }
+
+    /**
+     * Метод для получения рекомендаций фильмов пользователю
+     */
+    public List<FilmDto> getRecommendations(Long userId) {
+        log.info("Получаем рекомендации фильмов для пользователя с ID: {}", userId);
+
+        User user = userRepository.getUser(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+
+        List<Long> userLikes = filmService.getLikedFilmsByUserId(userId);
+
+        Map<Long, Integer> similarUsers = new HashMap<>();
+
+        // Находим пользователей с максимальным количеством пересечения по лайкам
+        for (Long friendId : user.getFriendship()) {
+            List<Long> friendLikes = filmService.getLikedFilmsByUserId(friendId);
+
+            // Вычисляем количество общих лайков
+            int commonLikes = 0;
+            for (Long filmId : friendLikes) {
+                if (userLikes.contains(filmId)) {
+                    commonLikes++;
+                }
+            }
+
+            similarUsers.put(friendId, commonLikes);
+        }
+
+        // Сортируем пользователей по количеству общих лайков
+        List<Map.Entry<Long, Integer>> sortedSimilarUsers = similarUsers.entrySet().stream()
+                .sorted(Map.Entry.<Long, Integer>comparingByValue().reversed())
+                .collect(Collectors.toList());
+
+        // Получаем рекомендации на основе лайков наиболее похожих пользователей
+        Set<Long> recommendedFilms = new HashSet<>();
+
+        for (Map.Entry<Long, Integer> entry : sortedSimilarUsers) {
+            List<Long> similarUserLikes = filmService.getLikedFilmsByUserId(entry.getKey());
+
+            // Добавляем фильмы, которые понравились похожим пользователям, но еще не были оценены текущим
+            for (Long filmId : similarUserLikes) {
+                if (!userLikes.contains(filmId)) {
+                    recommendedFilms.add(filmId);
+                }
+            }
+        }
+
+        // Возвращаем рекомендации, отсортированные по популярности
+        return recommendedFilms.stream()
+                .map(filmService::getFilmById)
+                .sorted(Comparator.comparing(FilmDto::getId))
+                .collect(Collectors.toList());
     }
 }
