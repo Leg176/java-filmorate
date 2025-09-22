@@ -32,6 +32,7 @@ public class Film {
 
     private MotionPictureAssociation mpa;
     private Set<Genre> genres = new HashSet<>();
+    private Set<Director> director = new HashSet<>();
     private Long likes;
 
     public Film() {
