@@ -14,7 +14,6 @@ public class ReviewsRowMapper implements RowMapper<Review> {
     public Review mapRow(ResultSet rs, int rowNum) throws SQLException {
         return Review.builder()
                 .id(rs.getLong("id"))
-//                .idReview(rs.getLong())
                 .content(rs.getString("content"))
                 .isPositive(rs.getBoolean("isPositive"))
                 .userId(rs.getLong("idUser"))
