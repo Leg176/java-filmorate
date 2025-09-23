@@ -26,24 +26,37 @@ public class RecommendationService {
     }
 
     public List<FilmDto> getRecommendations(Long userId) {
-        User user = userRepository.getUser(userId).orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userRepository.getUser(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Получаем фильмы, которые уже лайкал пользователь
         List<Long> likedFilms = filmRepository.findAllLikesFilm(userId);
 
-        // Найти пользователей с максимальным количеством пересечения по лайкам
-        Map<Long, Integer> similarUsers = new HashMap<>();
-        for (Long friendId : user.getFriendship()) {
-            List<Long> friendLikedFilms = filmRepository.findAllLikesFilm(friendId);
-            int intersection = 0;
-            for (Long filmId : likedFilms) {
-                if (friendLikedFilms.contains(filmId)) {
-                    intersection++;
-                }
-            }
-            similarUsers.put(friendId, intersection);
+        if (likedFilms.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        // Определить фильмы, которые один пролайкал, а другой нет
+        Map<Long, Integer> similarUsers = new HashMap<>();
+
+        for (Long friendId : user.getFriendship()) {
+            List<Long> friendLikedFilms = filmRepository.findAllLikesFilm(friendId);
+            int commonCount = 0;
+
+            for (Long filmId : likedFilms) {
+                if (friendLikedFilms.contains(filmId)) {
+                    commonCount++;
+                }
+            }
+
+            similarUsers.put(friendId, commonCount);
+        }
+
+        if (similarUsers.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         Set<Long> recommendedFilms = new HashSet<>();
+
         similarUsers.entrySet().stream()
                 .sorted(Map.Entry.<Long, Integer>comparingByValue().reversed())
                 .forEach(entry -> {
@@ -55,12 +68,19 @@ public class RecommendationService {
                     }
                 });
 
-        // Рекомендовать фильмы, которым поставил лайк пользователь с похожими вкусами
-        List<Film> films = filmRepository.findMany("SELECT * FROM Films WHERE idFilm IN (" +
-                String.join(",", recommendedFilms.stream().map(String::valueOf).collect(Collectors.toList())) + ")");
+        if (recommendedFilms.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String ids = String.join(",", recommendedFilms.stream().map(String::valueOf).collect(Collectors.toList()));
+        String sql = "SELECT * FROM Films WHERE idFilm IN (" + ids + ") ORDER BY likes DESC LIMIT 10";
+
+        List<Film> films = filmRepository.findMany(sql);
 
         return films.stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
+
+
 }
