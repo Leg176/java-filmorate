@@ -234,4 +234,8 @@ public class FilmRepository extends BaseRepository<Film> {
         String sql = "SELECT COUNT(*) FROM Likes WHERE idFilm = ?";
         return jdbc.queryForObject(sql, Long.class, filmId);
     }
+    public List<Long> findAllLikesFilms(Long userId) {
+        String query = "SELECT idFilm FROM Likes WHERE idUser = ?";
+        return jdbc.queryForList(query, Long.class, userId);
+    }
 }
