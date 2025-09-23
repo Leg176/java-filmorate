@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.dal;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -59,5 +60,19 @@ public class MpaRepository extends BaseRepository<MotionPictureAssociation> {
                         arr -> (Long) arr[0],
                         arr -> (MotionPictureAssociation) arr[1]
                 ));
+    }
+
+    /**
+     * Возвращает рейтинг фильма по его ID
+     * @param filmId ID фильма
+     * @return Объект рейтинга
+     */
+    public MotionPictureAssociation getFilmMpa(Long filmId) {
+        String sql = "SELECT m.* FROM Mpa_rating m INNER JOIN Films f ON m.idMpa = f.idMpa WHERE f.idFilm = ?";
+        try {
+            return jdbc.queryForObject(sql, new MpaRowMapper(), filmId);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 }

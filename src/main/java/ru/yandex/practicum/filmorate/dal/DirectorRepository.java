@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dal.mappers.DirectorRowMapper;
 import ru.yandex.practicum.filmorate.model.Director;
 
 import java.util.*;
@@ -113,5 +114,10 @@ public class DirectorRepository extends BaseRepository<Director> {
                                 Collectors.toSet()
                         )
                 ));
+    }
+
+    public Set<Director> getFilmDirectors(Long filmId) {
+        String sql = "SELECT d.* FROM Directors d INNER JOIN FilmDirectors fd ON d.idDirector = fd.idDirector WHERE fd.idFilm = ?";
+        return new HashSet<>(jdbc.query(sql, new DirectorRowMapper(), filmId));
     }
 }

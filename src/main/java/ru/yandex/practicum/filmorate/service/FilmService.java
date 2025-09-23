@@ -392,13 +392,17 @@ public class FilmService {
         Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(filmIds);
 
         for (Film film : recommendedFilms) {
-            film.setMpa(mpaMap.get(film.getIdFilm()));
-            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-            film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+            film.setMpa(mpaRepository.getFilmMpa(film.getIdFilm()));
+            film.setGenres(genreRepository.getFilmGenres(film.getIdFilm()));
+            film.setDirector(directorRepository.getFilmDirectors(film.getIdFilm()));
         }
 
         // Возвращаем DTO-объекты фильмов
         return recommendedFilms.stream()
+                .filter(film -> film.getNameFilm() != null && !film.getNameFilm().isEmpty())
+                .filter(film -> film.getDescription() != null && !film.getDescription().isEmpty())
+                .filter(film -> film.getReleaseDate() != null)
+                .filter(film -> film.getDuration() != null)
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }

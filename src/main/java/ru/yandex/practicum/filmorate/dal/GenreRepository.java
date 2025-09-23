@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.dal;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
+import ru.yandex.practicum.filmorate.dal.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 import java.util.*;
@@ -82,5 +83,10 @@ public class GenreRepository extends BaseRepository<Genre> {
                                 Collectors.toSet()
                         )
                 ));
+    }
+
+    public Set<Genre> getFilmGenres(Long filmId) {
+        String sql = "SELECT g.* FROM Genres g INNER JOIN FilmGenres fg ON g.idGenre = fg.idGenre WHERE fg.idFilm = ?";
+        return new HashSet<>(jdbc.query(sql, new GenreRowMapper(), filmId));
     }
 }
