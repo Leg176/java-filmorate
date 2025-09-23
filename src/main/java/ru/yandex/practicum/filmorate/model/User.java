@@ -29,6 +29,7 @@ public class User {
     @PastOrPresent
     private LocalDate birthday;
     private Set<Long> friendship = new HashSet<>();
+    private Set<Long> likedFilms = new HashSet<>();
 
     public User() {
     }

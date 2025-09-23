@@ -61,6 +61,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM FilmDirectors WHERE idFilm = ? AND idDirector = ?";
     private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON " +
             "f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
+    private static final String FIND_USERS_WHO_LIKED_QUERY = "SELECT idUser FROM Likes WHERE idFilm = ?";
 
     public List<Film> findFilmsByDirector(Long directorId, String sortBy) {
 
@@ -212,5 +213,9 @@ public class FilmRepository extends BaseRepository<Film> {
         params.add(limit);
 
         return findMany(sql.toString(), params.toArray());
+    }
+
+    public List<Long> findAllUsersWhoLiked(Long filmId) {
+        return jdbc.queryForList(FIND_USERS_WHO_LIKED_QUERY, Long.class, filmId);
     }
 }
