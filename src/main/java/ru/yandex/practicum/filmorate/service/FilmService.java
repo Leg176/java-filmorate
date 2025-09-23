@@ -10,10 +10,7 @@ import ru.yandex.practicum.filmorate.dto.film.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.model.Director;
-import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
+import ru.yandex.practicum.filmorate.model.*;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -345,5 +342,135 @@ public class FilmService {
         return commonFilms.stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Метод для получения рекомендаций фильмов для пользователя
+     * @param userId ID пользователя, для которого формируем рекомендации
+     * @return Список рекомендуемых фильмов
+     */
+    public List<FilmDto> getRecommendations(Long userId) {
+        // Проверяем, существует ли пользователь
+        validationUser(userId);
+
+        // Получаем фильмы, которые пользователь уже оценил (поставил лайк)
+        Set<Long> likedFilms = new HashSet<>(filmRepository.findAllLikesFilm(userId));
+
+        // Если пользователь еще не оценил ни один фильм, возвращаем пустой список
+        if (likedFilms.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Найдем пользователей с похожими предпочтениями
+        List<Long> similarUsers = findSimilarUsers(userId, likedFilms);
+
+        // Если нет пользователей с похожими предпочтениями, возвращаем пустой список
+        if (similarUsers.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Найдем фильмы, которые понравились похожим пользователям, но еще не понравились текущему
+        Set<Long> recommendedFilmIds = findCommonLikedFilms(similarUsers, likedFilms);
+
+        // Если подходящих фильмов нет, возвращаем пустой список
+        if (recommendedFilmIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Получаем информацию о рекомендуемых фильмах из репозитория
+        List<Film> recommendedFilms = filmRepository.findMany(
+                "SELECT * FROM Films WHERE idFilm IN (" +
+                        String.join(",", recommendedFilmIds.stream().map(String::valueOf).collect(Collectors.toList())) + ")",
+                recommendedFilmIds.toArray()
+        );
+
+        // Добавляем информацию о жанрах, рейтинге и режиссерах к каждому фильму
+        List<Long> filmIds = recommendedFilms.stream().map(Film::getIdFilm).collect(Collectors.toList());
+
+        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(filmIds);
+        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(filmIds);
+        Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(filmIds);
+
+        for (Film film : recommendedFilms) {
+            film.setMpa(mpaMap.get(film.getIdFilm()));
+            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+            film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+        }
+
+        // Возвращаем DTO-объекты фильмов
+        return recommendedFilms.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Проверяет существование пользователя
+     * @param userId ID пользователя
+     */
+    private void validationUser(Long userId) {
+        if (!userRepository.getUser(userId).isPresent()) {
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+    }
+
+    /**
+     * Находит пользователей с похожими предпочтениями
+     * @param userId ID текущего пользователя
+     * @param likedFilms Фильмы, которые пользователь уже оценил
+     * @return Список ID пользователей с похожими предпочтениями
+     */
+    private List<Long> findSimilarUsers(Long userId, Set<Long> likedFilms) {
+        // Получаем всех пользователей
+        List<User> allUsers = userRepository.findAll();
+
+        // Если нет других пользователей, возвращаем пустой список
+        if (allUsers.size() <= 1) {
+            return Collections.emptyList();
+        }
+
+        // Для каждого пользователя вычисляем коэффициент сходства
+        Map<Long, Integer> similarityScores = new HashMap<>();
+
+        for (User user : allUsers) {
+            if (!user.getIdUser().equals(userId)) {
+                // Получаем фильмы, которые оценил текущий пользователь
+                Set<Long> userLikedFilms = new HashSet<>(filmRepository.findAllLikesFilm(user.getIdUser()));
+
+                // Вычисляем пересечение между фильмами текущего пользователя и другого
+                Set<Long> commonFilms = new HashSet<>(likedFilms);
+                commonFilms.retainAll(userLikedFilms);
+
+                // Чем больше общих фильмов, тем выше коэффициент сходства
+                int score = commonFilms.size();
+                similarityScores.put(user.getIdUser(), score);
+            }
+        }
+
+        // Сортируем пользователей по коэффициенту сходства (от большего к меньшему)
+        return similarityScores.entrySet().stream()
+                .sorted(Map.Entry.<Long, Integer>comparingByValue().reversed())
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Находит фильмы, которые понравились похожим пользователям, но еще не понравились текущему
+     * @param similarUsers Список ID пользователей с похожими предпочтениями
+     * @param likedFilms Фильмы, которые пользователь уже оценил
+     * @return Список ID рекомендуемых фильмов
+     */
+    private Set<Long> findCommonLikedFilms(List<Long> similarUsers, Set<Long> likedFilms) {
+        Set<Long> recommendedFilmIds = new HashSet<>();
+
+        // Для каждого похожего пользователя находим фильмы, которые он оценил, но текущий пользователь еще не оценил
+        for (Long similarUserId : similarUsers) {
+            Set<Long> userLikedFilms = new HashSet<>(filmRepository.findAllLikesFilm(similarUserId));
+            userLikedFilms.removeAll(likedFilms);
+
+            // Добавляем эти фильмы в список рекомендаций
+            recommendedFilmIds.addAll(userLikedFilms);
+        }
+
+        return recommendedFilmIds;
     }
 }
