@@ -84,4 +84,11 @@ public class FilmController {
     public void removeFilm(@PathVariable @Positive(message = "id должен быть больше 0") Long filmId) {
         filmService.deleteFilm(filmId);
     }
+
+    @GetMapping("/search")
+    public List<FilmDto> searchFilms(@RequestParam String query,
+                                     @RequestParam String by) {
+        log.info("Выполняется поиск фильмов с запросом '{}', параметр поиска: {}", query, by);
+        return filmService.searchFilms(query, by);
+    }
 }
