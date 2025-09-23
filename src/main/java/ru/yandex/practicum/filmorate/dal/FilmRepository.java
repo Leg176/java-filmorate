@@ -61,6 +61,32 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM FilmDirectors WHERE idFilm = ? AND idDirector = ?";
     private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON " +
             "f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
+    private static final String GET_RECOMMENDATION = """
+            SELECT *
+            FROM (
+                SELECT *
+                FROM FILMS
+                WHERE idFilm IN (
+                    SELECT idFilm
+                    FROM LIKES
+                    WHERE idUser IN (
+                        SELECT idUser
+                        FROM LIKES
+                        WHERE idFilm IN (
+                            SELECT idFilm
+                            FROM LIKES
+                            WHERE idUser = ?
+                        )
+                        AND idUser <> ?
+                    )
+                )
+            ) t
+            WHERE idFilm NOT IN (
+                SELECT idFilm
+                FROM LIKES
+                WHERE idUser = ?
+            )
+            """;
 
     public List<Film> findFilmsByDirector(Long directorId, String sortBy) {
 
@@ -234,8 +260,13 @@ public class FilmRepository extends BaseRepository<Film> {
         String sql = "SELECT COUNT(*) FROM Likes WHERE idFilm = ?";
         return jdbc.queryForObject(sql, Long.class, filmId);
     }
+
     public List<Long> findAllLikesFilms(Long userId) {
         String query = "SELECT idFilm FROM Likes WHERE idUser = ?";
         return jdbc.queryForList(query, Long.class, userId);
+    }
+
+    public List<Film> getRecommendations(Long userId) {
+        return findMany(GET_RECOMMENDATION, userId, userId, userId);
     }
 }
