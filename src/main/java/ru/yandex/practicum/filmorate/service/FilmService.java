@@ -14,6 +14,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MotionPictureAssociation;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -29,18 +30,20 @@ public class FilmService {
     private final MpaRepository mpaRepository;
     private final GenreRepository genreRepository;
     private final DirectorRepository directorRepository;
+    private final EventService eventService;
 
     private static final LocalDate FIRST_FILM_DATE = LocalDate.of(1895, 12, 25);
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
                        UserRepository userRepository, MpaRepository mpaRepository,
-                       DirectorRepository directorRepository) {
+                       DirectorRepository directorRepository, EventService eventService) {
         this.filmRepository = filmRepository;
         this.userRepository = userRepository;
         this.mpaRepository = mpaRepository;
         this.genreRepository = genreRepository;
         this.directorRepository = directorRepository;
+        this.eventService = eventService;
     }
 
     public List<FilmDto> getFilmsByDirector(Long directorId, String sortBy) {
@@ -115,10 +118,10 @@ public class FilmService {
 
     public List<FilmDto> getFilms() {
         try {
-        List<Film> films = filmRepository.findAll();
-        if (films.isEmpty()) {
-            return Collections.emptyList();
-        }
+            List<Film> films = filmRepository.findAll();
+            if (films.isEmpty()) {
+                return Collections.emptyList();
+            }
 
             List<Long> ids = films.stream()
                     .map(Film::getIdFilm)
@@ -209,11 +212,14 @@ public class FilmService {
     public void addLikes(Long idFilm, Long idUser) {
         validationInLikes(idFilm, idUser);
         filmRepository.addLike(idFilm, idUser);
+        eventService.add(idFilm, idUser, EventType.LIKE);
     }
 
     public void deleteLikes(Long idFilm, Long idUser) {
         validationInLikes(idFilm, idUser);
         filmRepository.deleteLike(idFilm, idUser);
+        eventService.delete(idFilm, idUser, EventType.LIKE);
+
     }
 
     private void addDirector(Long idFilm, Long idDirector) {
