@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 public class RecommendationService {
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
+    private final FilmService filmService;
 
     public List<Film> getRecommendations(Long userId) {
         log.info("Получение рекомендаций для пользователя с ID {}", userId);
@@ -24,10 +25,15 @@ public class RecommendationService {
         // Получаем пользователя и его лайки
         User user = userRepository.getUser(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-        List<Long> userLikes = getUserLikedFilms(user.getIdUser());
+        List<Long> userLikedFilms = getUserLikedFilms(user.getIdUser());
+
+        if (userLikedFilms.isEmpty()) {
+            log.warn("Пользователь {} не имеет лайков на фильмы", userId);
+            return Collections.emptyList();
+        }
 
         // Находим пользователей с максимальным количеством пересечения по лайкам
-        Map<Long, Integer> similarUsers = findSimilarUsers(userLikes);
+        Map<Long, Integer> similarUsers = findSimilarUsers(userLikedFilms);
 
         if (similarUsers.isEmpty()) {
             log.warn("Не найдены пользователи с похожими предпочтениями для пользователя {}", userId);
@@ -42,18 +48,16 @@ public class RecommendationService {
             List<Long> similarUserLikes = getUserLikedFilms(entry.getKey());
 
             for (Long filmId : similarUserLikes) {
-                if (!userLikes.contains(filmId)) {
+                if (!userLikedFilms.contains(filmId)) {
                     recommendedFilmIds.add(filmId);
                 }
             }
         }
 
         // Получаем информацию о рекомендуемых фильмах
-        List<Film> recommendedFilms = new ArrayList<>();
-        for (Long filmId : recommendedFilmIds) {
-            Film film = filmRepository.getFilm(filmId)
-                    .orElseThrow(() -> new RuntimeException("Фильм не найден"));
-            recommendedFilms.add(film);
+        List<Film> recommendedFilms = Collections.emptyList();
+        if (!recommendedFilmIds.isEmpty()) {
+            recommendedFilms = filmService.getFilmsWithFullInfo(new ArrayList<>(recommendedFilmIds));
         }
 
         log.info("Для пользователя {} найдено {} рекомендаций", userId, recommendedFilms.size());

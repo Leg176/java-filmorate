@@ -346,4 +346,50 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
+
+    public List<Film> getFilmsWithFullInfo(List<Long> filmIds) {
+        if (filmIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<Long, Film> filmsMap = new HashMap<>();
+
+        // Получаем базовую информацию о фильмах
+        for (Long filmId : filmIds) {
+            Film film = filmRepository.getFilm(filmId)
+                    .orElseThrow(() -> new RuntimeException("Фильм не найден"));
+            filmsMap.put(filmId, film);
+        }
+
+        List<Long> uniqueFilmIds = filmIds.stream().distinct().collect(Collectors.toList());
+
+        // Получаем MPA для всех фильмов
+        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(uniqueFilmIds);
+
+        // Получаем жанры для всех фильмов
+        Map<Long, Set<Genre>> genreMap = new HashMap<>();
+        for (Long filmId : uniqueFilmIds) {
+            List<Genre> genres = genreRepository.findGenresFilm(filmId);
+            genreMap.put(filmId, new HashSet<>(genres));
+        }
+
+        // Получаем режиссёров для всех фильмов
+        Map<Long, Set<Director>> directorMap = new HashMap<>();
+        for (Long filmId : uniqueFilmIds) {
+            List<Director> directors = directorRepository.findDirectorsFilm(filmId);
+            directorMap.put(filmId, new HashSet<>(directors));
+        }
+
+        // Заполняем фильмы полной информацией
+        List<Film> result = new ArrayList<>();
+        for (Map.Entry<Long, Film> entry : filmsMap.entrySet()) {
+            Film film = entry.getValue();
+            film.setMpa(mpaMap.getOrDefault(film.getIdFilm(), new MotionPictureAssociation()));
+            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+            film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+            result.add(film);
+        }
+
+        return result;
+    }
 }
