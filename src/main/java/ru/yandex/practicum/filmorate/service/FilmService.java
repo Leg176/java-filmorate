@@ -352,4 +352,53 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
+
+    public List<FilmDto> searchFilms(String query, String by) {
+        log.info("Поиск фильмов по запросу '{}', параметр поиска: {}", query, by);
+
+        List<Film> films = new ArrayList<>();
+
+        // Проверяем, какие критерии поиска указаны
+        if (by.contains("title") && by.contains("director")) {
+            // Поиск одновременно по названию и режиссеру
+            films.addAll(filmRepository.searchByTitle(query));
+            films.addAll(filmRepository.searchByDirector(query));
+        } else if (by.contains("title")) {
+            // Поиск только по названию
+            films = filmRepository.searchByTitle(query);
+        } else if (by.contains("director")) {
+            // Поиск только по режиссеру
+            films = filmRepository.searchByDirector(query);
+        } else {
+            throw new IllegalArgumentException("Неверный параметр поиска. Допустимые значения: 'title', 'director', 'title,director'");
+        }
+
+        // Получаем дополнительную информацию о фильмах
+        List<Long> filmIds = films.stream()
+                .map(Film::getIdFilm)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(filmIds);
+        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(filmIds);
+        Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(filmIds);
+
+        // Добавляем информацию о жанрах, рейтинге и режиссерах
+        for (Film film : films) {
+            film.setMpa(mpaMap.getOrDefault(film.getIdFilm(), null));
+            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+            film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+        }
+
+        // Сортируем фильмы по популярности (по количеству лайков)
+        films.sort((f1, f2) -> {
+            Long likes1 = filmRepository.getLikeCount(f1.getIdFilm());
+            Long likes2 = filmRepository.getLikeCount(f2.getIdFilm());
+            return likes2.compareTo(likes1);
+        });
+
+        return films.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
 }

@@ -213,4 +213,25 @@ public class FilmRepository extends BaseRepository<Film> {
 
         return findMany(sql.toString(), params.toArray());
     }
+
+    public List<Film> searchByTitle(String query) {
+        String sql = "SELECT * FROM Films WHERE nameFilm ILIKE ?";
+        return findMany(sql, "%" + query + "%");
+    }
+
+    public List<Film> searchByDirector(String query) {
+        String sql = """
+            SELECT DISTINCT f.*
+             FROM Films f
+            JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
+            JOIN Directors d ON fd.idDirector = d.idDirector
+            WHERE d.name ILIKE ?
+            """;
+        return findMany(sql, "%" + query + "%");
+    }
+
+    public Long getLikeCount(Long filmId) {
+        String sql = "SELECT COUNT(*) FROM Likes WHERE idFilm = ?";
+        return jdbc.queryForObject(sql, Long.class, filmId);
+    }
 }
