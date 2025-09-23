@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.dto.review.ReviewResponseDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.ReviewsMapper;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
 import ru.yandex.practicum.filmorate.model.enums.LikeType;
 
 import java.util.List;
@@ -13,20 +14,28 @@ import java.util.List;
 @Service
 public class ReviewService {
     private final ReviewsRepository reviewsRepository;
+    private final EventService eventService;
 
-    public ReviewService(ReviewsRepository reviewsRepository) {
+    public ReviewService(ReviewsRepository reviewsRepository, EventService eventService) {
         this.reviewsRepository = reviewsRepository;
+        this.eventService = eventService;
     }
 
     public ReviewResponseDto create(Review review) {
         if (review.getUserId() <= 0 || review.getFilmId() <= 0) {
             throw new NotFoundException("Неверный id");
         }
-        return ReviewsMapper.toDto(reviewsRepository.save(review));
+        Review createdReview = reviewsRepository.save(review);
+        eventService.add(createdReview.getId(), createdReview.getUserId(), EventType.REVIEW);
+        return ReviewsMapper.toDto(createdReview);
     }
 
     public void delete(Long id) {
+        Review review = reviewsRepository.getById(id).orElseThrow(
+                () -> new NotFoundException("пользователя с id :" + id + " не существует")
+        );
         reviewsRepository.deleteReview(id);
+        eventService.delete(review.getId(), review.getUserId(), EventType.REVIEW);
     }
 
     public Review update(Review review) {
@@ -34,6 +43,7 @@ public class ReviewService {
                 () -> new NotFoundException("отзыв с id: " + review.getId() + " не найдет")
         );
         Review updatedReview = ReviewsMapper.updateReviewFields(currentReview, review);
+        eventService.update(updatedReview.getId(), updatedReview.getUserId(), EventType.REVIEW);
         return reviewsRepository.update(updatedReview);
     }
 

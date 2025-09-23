@@ -14,7 +14,7 @@ public class Review {
     private Long id;
     @NotNull
     private String content;
-    private Long idReview;
+    //    private Long idReview;
     private Boolean isPositive;
     private Long userId;
     private Long filmId;

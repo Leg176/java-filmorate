@@ -11,8 +11,11 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -20,10 +23,12 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final EventService eventService;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, EventService eventService) {
         this.userRepository = userRepository;
+        this.eventService = eventService;
     }
 
     public UserDto createUser(NewUserRequest request) {
@@ -89,6 +94,7 @@ public class UserService {
             throw new ValidationException("Пользователи уже являются друзьями");
         }
         userRepository.addFriend(userId, friendId);
+        eventService.add(friendId, userId, EventType.FRIEND);
     }
 
     public void deleteFriend(Long userId, Long friendId) {
@@ -96,6 +102,8 @@ public class UserService {
         validationUserIsEmpty(userId);
         validationUserIsEmpty(friendId);
         userRepository.deleteFriends(userId, friendId);
+        eventService.delete(friendId, userId, EventType.FRIEND);
+
     }
 
     public void deleteUser(Long userId) {
