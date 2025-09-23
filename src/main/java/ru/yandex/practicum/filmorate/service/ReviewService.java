@@ -1,99 +1,74 @@
 package ru.yandex.practicum.filmorate.service;
 
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.ReviewRepository;
-import ru.yandex.practicum.filmorate.dal.mappers.ReviewMapper;
-import ru.yandex.practicum.filmorate.dto.review.NewReviewRequest;
-import ru.yandex.practicum.filmorate.dto.review.ReviewDto;
-import ru.yandex.practicum.filmorate.dto.review.UpdateReviewRequest;
+import ru.yandex.practicum.filmorate.dal.ReviewsRepository;
+import ru.yandex.practicum.filmorate.dto.review.ReviewResponseDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.mapper.ReviewsMapper;
 import ru.yandex.practicum.filmorate.model.Review;
-import ru.yandex.practicum.filmorate.model.feed.EventType;
-import ru.yandex.practicum.filmorate.model.feed.Operation;
+import ru.yandex.practicum.filmorate.model.enums.EventType;
+import ru.yandex.practicum.filmorate.model.enums.LikeType;
 
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class ReviewService {
+    private final ReviewsRepository reviewsRepository;
+    private final EventService eventService;
 
-    private final ReviewRepository reviews;
-    private final UserService userService;
-    private final FilmService filmService;
-    private final FeedService feedService;
-
-    @Transactional
-    public ReviewDto create(NewReviewRequest req) {
-        userService.getUserById(req.getUserId());
-        filmService.getFilmById(req.getFilmId());
-
-        Review created = reviews.create(req);
-
-        feedService.recordEvent(created.getUserId(), EventType.REVIEW, Operation.ADD, created.getIdReview());
-
-        return ReviewMapper.mapToDto(created);
+    public ReviewService(ReviewsRepository reviewsRepository, EventService eventService) {
+        this.reviewsRepository = reviewsRepository;
+        this.eventService = eventService;
     }
 
-    @Transactional
-    public ReviewDto update(UpdateReviewRequest req) {
-        reviews.getById(req.getIdReview())
-                .orElseThrow(() -> new NotFoundException("Отзыв не найден: id=" + req.getIdReview()));
-
-        Review updated = reviews.update(req);
-
-        feedService.recordEvent(updated.getUserId(), EventType.REVIEW, Operation.UPDATE, updated.getIdReview());
-
-        return ReviewMapper.mapToDto(updated);
+    public ReviewResponseDto create(Review review) {
+        if (review.getUserId() <= 0 || review.getFilmId() <= 0) {
+            throw new NotFoundException("Неверный id");
+        }
+        Review createdReview = reviewsRepository.save(review);
+        eventService.add(createdReview.getId(), createdReview.getUserId(), EventType.REVIEW);
+        return ReviewsMapper.toDto(createdReview);
     }
 
-    @Transactional
-    public void delete(long reviewId) {
-        Review before = reviews.getById(reviewId)
-                .orElseThrow(() -> new NotFoundException("Отзыв не найден: id=" + reviewId));
-
-        reviews.delete(reviewId);
-
-        feedService.recordEvent(before.getUserId(), EventType.REVIEW, Operation.REMOVE, reviewId);
+    public void delete(Long id) {
+        Review review = reviewsRepository.getById(id).orElseThrow(
+                () -> new NotFoundException("пользователя с id :" + id + " не существует")
+        );
+        reviewsRepository.deleteReview(id);
+        eventService.delete(review.getId(), review.getUserId(), EventType.REVIEW);
     }
 
-    public ReviewDto getById(Long id) {
-        Review r = reviews.getById(id).orElseThrow(() -> new NotFoundException("Отзыв не найден: id=" + id));
-        return ReviewMapper.mapToDto(r);
+    public Review update(Review review) {
+        Review currentReview = reviewsRepository.getById(review.getId()).orElseThrow(
+                () -> new NotFoundException("отзыв с id: " + review.getId() + " не найдет")
+        );
+        Review updatedReview = ReviewsMapper.updateReviewFields(currentReview, review);
+        eventService.update(updatedReview.getId(), updatedReview.getUserId(), EventType.REVIEW);
+        return reviewsRepository.update(updatedReview);
     }
 
-    public List<ReviewDto> getReviews(Long filmId, Integer count) {
-        int limit = (count == null || count <= 0) ? 10 : count;
-        List<Review> list = (filmId == null)
-                ? reviews.findAll(limit)
-                : reviews.findByFilmId(filmId, limit);
-        return list.stream().map(ReviewMapper::mapToDto).toList();
+    public void addLike(Long reviewId, Long userId, LikeType like) {
+        reviewsRepository.insertLikeDislikeToReview(reviewId, userId, like);
     }
 
-    @Transactional
-    public ReviewDto addLike(long reviewId, long userId) {
-        userService.getUserById(userId);
-        reviews.addLike(reviewId, userId);
-        return getById(reviewId);
+    public void deleteLike(Long reviewId, Long userId, LikeType like) {
+        reviewsRepository.removeLikeFromReview(reviewId, userId, like);
     }
 
-    @Transactional
-    public ReviewDto addDislike(long reviewId, long userId) {
-        userService.getUserById(userId);
-        reviews.addDislike(reviewId, userId);
-        return getById(reviewId);
+    public List<ReviewResponseDto> getAllWithCount(Long id, Integer count) {
+        return reviewsRepository.findAll(id, count).stream()
+                .map(ReviewsMapper::toDto)
+                .toList();
     }
 
-    @Transactional
-    public ReviewDto removeLike(long reviewId, long userId) {
-        reviews.removeLike(reviewId, userId);
-        return getById(reviewId);
+    public List<ReviewResponseDto> getAllWithCount(Integer count) {
+        return reviewsRepository.findAll(count).stream()
+                .map(ReviewsMapper::toDto)
+                .toList();
     }
 
-    @Transactional
-    public ReviewDto removeDislike(long reviewId, long userId) {
-        reviews.removeDislike(reviewId, userId);
-        return getById(reviewId);
+    public Review getById(Long id) {
+        return reviewsRepository.getById(id)
+                .orElseThrow(() -> new NotFoundException("такого ревью не существует"));
     }
 }

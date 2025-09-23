@@ -3,8 +3,8 @@ package ru.yandex.practicum.filmorate.controller;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.film.FilmDto;
 import ru.yandex.practicum.filmorate.dto.film.NewFilmRequest;
@@ -16,24 +16,34 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/films")
-@RequiredArgsConstructor
 public class FilmController {
 
     private final FilmService filmService;
+
+    @Autowired
+    private FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
 
     @GetMapping
     public List<FilmDto> findAll() {
         return filmService.getFilms();
     }
 
+    @GetMapping("/director/{directorId}")
+    public List<FilmDto> getFilmsByDirector(@PathVariable Long directorId,
+                                            @RequestParam(defaultValue = "year") String sortBy) {
+        return filmService.getFilmsByDirector(directorId, sortBy);
+    }
+
     @PostMapping
-    public FilmDto create(@Valid @RequestBody NewFilmRequest newFilmRequest) {
-        return filmService.createFilm(newFilmRequest);
+    public FilmDto create(@Valid @RequestBody NewFilmRequest newfilmRequest) {
+        return filmService.createFilm(newfilmRequest);
     }
 
     @PutMapping
-    public FilmDto update(@Valid @RequestBody UpdateFilmRequest updateFilmRequest) {
-        return filmService.updateFilm(updateFilmRequest);
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest updatefilmRequest) {
+        return filmService.updateFilm(updatefilmRequest);
     }
 
     @GetMapping("/{id}")
@@ -54,11 +64,24 @@ public class FilmController {
     }
 
     @GetMapping("/popular")
-    public List<FilmDto> getMostPopular(
-            @RequestParam(value = "count", required = false, defaultValue = "10") @Min(1) Integer count,
-            @RequestParam(value = "genreId", required = false) @Positive Long genreId,
-            @RequestParam(value = "year", required = false) Integer year
-    ) {
+    public List<FilmDto> popular(@RequestParam(defaultValue = "10") @Min(1) Integer count,
+                                 @RequestParam(required = false)
+                                 @Positive(message = "genreId должен быть больше 0") Long genreId,
+                                 @RequestParam(required = false)
+                                 @Min(value = 1, message = "year должен быть положительным") Integer year) {
+        if (genreId == null && year == null) {
+            return filmService.topFilms(count);
+        }
         return filmService.getMostPopular(count, genreId, year);
+    }
+
+    @GetMapping("/common")
+    public List<FilmDto> commonFilm(@RequestParam Long userId, @RequestParam Long friendId) {
+        return filmService.getCommon(userId, friendId);
+    }
+
+    @DeleteMapping("/{filmId}")
+    public void removeFilm(@PathVariable @Positive(message = "id должен быть больше 0") Long filmId) {
+        filmService.deleteFilm(filmId);
     }
 }

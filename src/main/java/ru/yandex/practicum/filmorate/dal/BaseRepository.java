@@ -40,6 +40,11 @@ public abstract class BaseRepository<T> {
         return rowsDeleted > 0;
     }
 
+    protected boolean delete(String query, Object... params) {
+        int rowsDeleted = jdbc.update(query, params);
+        return rowsDeleted > 0;
+    }
+
     protected void update(String query, Object... params) {
         int rowsUpdated = jdbc.update(query, params);
         if (rowsUpdated == 0) {

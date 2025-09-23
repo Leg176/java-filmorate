@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -23,20 +22,17 @@ public class UserRepository extends BaseRepository<User> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM Users";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM Users WHERE idUser = ?";
     private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM Users WHERE email = ?";
-    private static final String INSERT_QUERY =
-            "INSERT INTO Users(email, login, name, birthday) VALUES (?, ?, ?, ?)";
-    private static final String ADD_FRIEND_QUERY =
-            "INSERT INTO Friends(idUser, idUserFriends) VALUES (?, ?)";
-    private static final String FIND_JOIN_FRIENDS_QUERY =
-            "SELECT f1.idUserFriends FROM Friends f1 WHERE f1.idUser = ? " +
+    private static final String INSERT_QUERY = "INSERT INTO Users(email, login, name, birthday)" +
+            "VALUES (?, ?, ?, ?)";
+    private static final String ADD_FRIEND_QUERY = "INSERT INTO Friends(idUser, idUserFriends) VALUES (?, ?)";
+    private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.idUserFriends FROM Friends f1 WHERE f1.idUser = ? " +
                     "AND f1.idUserFriends IN ( SELECT f2.idUserFriends FROM Friends f2 WHERE f2.idUser = ?)";
-    private static final String DELETE_FRIEND_QUERY =
-            "DELETE FROM Friends WHERE idUser = ? AND idUserFriends = ?";
-    private static final String UPDATE_QUERY =
-            "UPDATE Users SET email = ?, login = ?, name = ?, birthday = ? WHERE idUser = ?";
-
-    private static final String FIND_FRIENDSHIP =
-            "SELECT COUNT(*) FROM Friends f WHERE f.idUser = :idUser AND f.idUserFriends = :idUserFriends";
+    private static final String DELETE_FRIEND_QUERY = "DELETE FROM Friends WHERE idUser = ? AND idUserFriends = ?";
+    private static final String DELETE_USER_QUERY = "DELETE FROM Users WHERE idUser = ?";
+    private static final String UPDATE_QUERY = "UPDATE Users SET email = ?, login = ?, name = ?, birthday = ?" +
+            " WHERE idUser = ?";
+    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM Friends f WHERE f.idUser = :idUser " +
+            "AND f.idUserFriends = :idUserFriends";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -63,18 +59,22 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public void addFriend(long idUser, long friendId) {
-        // ВАЖНО: это простой INSERT без авто-ID → update
-        jdbc.update(ADD_FRIEND_QUERY, idUser, friendId);
+        insert(ADD_FRIEND_QUERY, "idUser", idUser, friendId);
     }
 
     public void deleteFriends(long idUser, long friendId) {
         jdbc.update(DELETE_FRIEND_QUERY, idUser, friendId);
     }
 
+    public void deleteUser(long idUser) {
+        jdbc.update(DELETE_USER_QUERY, idUser);
+    }
+
     public List<User> findJointFriendsUsers(Long idUser, Long otherId) {
         return jdbc.queryForList(FIND_JOIN_FRIENDS_QUERY, Long.class, idUser, otherId).stream()
                 .map(this::getUser)
-                .flatMap(Optional::stream)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
                 .collect(Collectors.toList());
     }
 
@@ -83,20 +83,18 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public User save(User user) {
-        long id = insert(
-                INSERT_QUERY, "idUser",
-                user.getEmail(),
-                user.getLogin(),
-                user.getName(),
-                user.getBirthday()
-        );
-        user.setIdUser(id);
-        return user;
+            long id = insert(INSERT_QUERY, "idUser",
+                    user.getEmail(),
+                    user.getLogin(),
+                    user.getName(),
+                    user.getBirthday()
+            );
+            user.setIdUser(id);
+            return user;
     }
 
     public User update(User user) {
-        update(
-                UPDATE_QUERY,
+        update(UPDATE_QUERY,
                 user.getEmail(),
                 user.getLogin(),
                 user.getName(),

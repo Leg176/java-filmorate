@@ -6,8 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Film.
@@ -33,7 +32,8 @@ public class Film {
 
     private MotionPictureAssociation mpa;
     private Set<Genre> genres = new HashSet<>();
-    private Set<Long> likes = new HashSet<>();
+    private Set<Director> director = new HashSet<>();
+    private Long likes;
 
     public Film() {
     }
