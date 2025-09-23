@@ -31,7 +31,7 @@ public class FilmRepository extends BaseRepository<Film> {
                     "       mr.nameMpa AS mpa_name " +
                     "FROM Films f " +
                     "LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa " +
-                    "INNER JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm " +
+                    "LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm " +
                     "            ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.idFilm " +
                     "ORDER BY q.counter DESC LIMIT ?";
 

@@ -158,9 +158,6 @@ public class FilmService {
 
         //Находим жанры принадлежавшие старому объекту Film
         List<Genre> genresOldFilm = genreRepository.findGenresFilm(film.getIdFilm());
-        if (genresOldFilm.isEmpty()) {
-            throw new NotFoundException("Жанры для фильма в базе данных с id " + film.getIdFilm() + " не обнаружен");
-        }
         //Находим режиссёров принадлежавших старому объекту Film
         List<Director> directorOldFilm = directorRepository.findDirectorsFilm(film.getIdFilm());
         //Создаём новый объект
@@ -170,24 +167,41 @@ public class FilmService {
         Set<Director> validDirectorUpdate = validationDirector(newFilm.getDirector());
         newFilm.setDirector(validDirectorUpdate);
         newFilm.setMpa(mpa);
-
+        deleteGenreBD(film, genresOldFilm);
+        deleteDirectorBD(film, directorOldFilm);
         filmRepository.update(newFilm);
         // Удаляем старые связи
-        deleteGenreBD(film, genresOldFilm);
-        //Добавляем в таблицу связей пары фильм - жанр
-        for (Genre g : validGenreUpdate) {
-            addGenres(newFilm.getIdFilm(), g.getId());
+        if (validGenreUpdate != null && !validGenreUpdate.isEmpty()) {
+            for (Genre g : validGenreUpdate) {
+                addGenres(newFilm.getIdFilm(), g.getId());
+            }
         }
-        //Добавляем в таблицу связей пары фильм - режиссёр
-        for (Director director : validDirectorUpdate) {
-            Long id = director.getId();
-            addDirector(newFilm.getIdFilm(), id);
+        if (validDirectorUpdate != null && !validDirectorUpdate.isEmpty()) {
+            for (Director director : validDirectorUpdate) {
+                Long id = director.getId();
+                addDirector(newFilm.getIdFilm(), id);
+            }
         }
         return FilmMapper.mapToFilmDto(newFilm);
     }
 
     public List<FilmDto> topFilms(int count) {
-        return filmRepository.findTopFilm(count).stream()
+        List<Film> films = filmRepository.findTopFilm(count);
+        List<Long> ids = films.stream()
+                .map(Film::getIdFilm)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
+        Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(ids);
+        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
+
+        for (Film film : films) {
+            film.setMpa(mpaMap.get(film.getIdFilm()));
+            film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
+        }
+        return films.stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
@@ -292,7 +306,7 @@ public class FilmService {
         // Создаем мапу для быстрого поиска
         Map<Long, Director> directorMap = foundDirectors.stream()
                 .collect(Collectors.toMap(Director::getId, Function.identity()));
-        // Проверяем наличие всех жанров и собираем результат
+        // Проверяем наличие всех режиссёров и собираем результат
         return directors.stream()
                 .map(Director::getId)
                 .distinct()
