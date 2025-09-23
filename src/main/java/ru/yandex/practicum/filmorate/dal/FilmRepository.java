@@ -221,8 +221,8 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> searchByDirector(String query) {
         String sql = """
-            SELECT DISTINCT f.* 
-            FROM Films f
+            SELECT DISTINCT f.*
+             FROM Films f
             JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
             JOIN Directors d ON fd.idDirector = d.idDirector
             WHERE d.name ILIKE ?
