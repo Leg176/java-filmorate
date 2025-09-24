@@ -36,11 +36,11 @@ public class FilmRepository extends BaseRepository<Film> {
                     "ORDER BY q.counter DESC LIMIT ?";
 
     private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM Likes l WHERE idFilm = ?";
-    private static final String ADD_LIKE_QUERY = "INSERT INTO Likes(idFilm, idUser) VALUES (?, ?)";
+    private static final String ADD_LIKE_QUERY = "MERGE INTO Likes (idFilm, idUser) KEY (idFilm, idUser) VALUES (?, ?)";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM Likes WHERE idFilm = ? AND idUser = ?";
     private static final String DELETE_FILM_QUERY = "DELETE FROM Films WHERE idFilm = ?";
     private static final String LIKES_QUERY = "SELECT idFilm, COUNT(*) as likesCount FROM Likes WHERE idFilm IN (";
-    private static final String ADD_GENRE_QUERY = "INSERT INTO FilmGenres(idFilm, idGenre) VALUES (?, ?)";
+    private static final String ADD_GENRE_QUERY = "MERGE INTO FilmGenres (idFilm, idGenre) KEY (idFilm, idGenre) VALUES (?, ?)";
     private static final String DELETE_GENRE_QUERY = "DELETE FROM FilmGenres WHERE idFilm = ? AND idGenre = ?";
     private static final String FIND_COMMON_FILMS = """
             SELECT сf.*
@@ -57,7 +57,7 @@ public class FilmRepository extends BaseRepository<Film> {
                             GROUP BY l.idFilm) сl ON сl.idFilm = сf.idFilm
             ORDER BY сl.cnt desc
             """;
-    private static final String ADD_DIRECTOR_QUERY = "INSERT INTO FilmDirectors(idFilm, idDirector) VALUES (?, ?)";
+    private static final String ADD_DIRECTOR_QUERY = "MERGE INTO FilmDirectors (idFilm, idDirector) KEY (idFilm, idDirector) VALUES (?, ?)";
     private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM FilmDirectors WHERE idFilm = ? AND idDirector = ?";
     private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON " +
             "f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
@@ -133,7 +133,7 @@ public class FilmRepository extends BaseRepository<Film> {
     }
 
     public void addDirector(Long idFilm, Long idDirector) {
-        insert(ADD_DIRECTOR_QUERY, "idFilm", idFilm, idDirector);
+        jdbc.update(ADD_DIRECTOR_QUERY, idFilm, idDirector);
     }
 
     public void delDirector(Long idFilm, Long idDirector) {
@@ -149,11 +149,11 @@ public class FilmRepository extends BaseRepository<Film> {
     }
 
     public void addGenre(Long idFilm, Long idGenre) {
-        insert(ADD_GENRE_QUERY, "idFilm", idFilm, idGenre);
+        jdbc.update(ADD_GENRE_QUERY, idFilm, idGenre);
     }
 
     public void addLike(Long idFilm, Long idUser) {
-        insert(ADD_LIKE_QUERY, "idFilm", idFilm, idUser);
+        jdbc.update(ADD_LIKE_QUERY, idFilm, idUser);
     }
 
     public void deleteLike(Long idFilm, Long idUser) {
@@ -247,12 +247,12 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> searchByDirector(String query) {
         String sql = """
-            SELECT DISTINCT f.*
-             FROM Films f
-            JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
-            JOIN Directors d ON fd.idDirector = d.idDirector
-            WHERE d.name ILIKE ?
-            """;
+                SELECT DISTINCT f.*
+                 FROM Films f
+                JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
+                JOIN Directors d ON fd.idDirector = d.idDirector
+                WHERE d.name ILIKE ?
+                """;
         return findMany(sql, "%" + query + "%");
     }
 
