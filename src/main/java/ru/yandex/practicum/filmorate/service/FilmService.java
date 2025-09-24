@@ -222,9 +222,11 @@ public class FilmService {
         List<Long> ids = films.stream().map(Film::getIdFilm).distinct().toList();
         Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
         Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
+        Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(ids);
         for (Film f : films) {
             f.setMpa(mpaMap.get(f.getIdFilm()));
             f.setGenres(genreMap.getOrDefault(f.getIdFilm(), new HashSet<>()));
+            f.setDirector(directorMap.getOrDefault(f.getIdFilm(), new HashSet<>()));
         }
         return films.stream().map(FilmMapper::mapToFilmDto).toList();
     }
