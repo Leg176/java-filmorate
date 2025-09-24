@@ -50,6 +50,12 @@ public class FilmService {
         if (directorId == null) {
             throw new IllegalArgumentException("Id не может быть равно null");
         }
+
+        Optional<Director> director = directorRepository.getDirector(directorId);
+        if (director.isEmpty()) {
+            throw new NotFoundException("Режиссёр с id = " + directorId + " не найден");
+        }
+
         // Получение фильмов режиссера
         List<Film> films = filmRepository.findFilmsByDirector(directorId, sortBy);
 
