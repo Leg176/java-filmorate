@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.dal.ReviewsRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.dto.review.ReviewResponseDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.ReviewsMapper;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
@@ -29,7 +30,7 @@ public class ReviewService {
 
     public ReviewResponseDto create(Review review) {
         if (review.getUserId() == null || review.getFilmId() == null) {
-            throw new NotFoundException("Неверный id");
+            throw new ValidationException("Неверный id");
         }
         userRepository.getUser(review.getUserId())
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + review.getUserId() + " не найден"));
