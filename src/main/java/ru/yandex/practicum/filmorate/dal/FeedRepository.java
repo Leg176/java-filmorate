@@ -11,7 +11,7 @@ import java.util.List;
 public class FeedRepository extends BaseRepository<Event> {
     private static final String INSERT_QUERY =
             "INSERT INTO events(idEntity, eventType, operation, idUser,  timeCreated) VALUES (?, ?, ?, ?, ?)";
-    private static final String READ_EVENT_FEED_FOR_USER_QUERY = "SELECT * FROM EVENTS WHERE idUser = ?;";
+    private static final String READ_EVENT_FEED_FOR_USER_QUERY = "SELECT * FROM EVENTS WHERE idUser = ?";
 
     public FeedRepository(JdbcTemplate jdbc, RowMapper<Event> mapper) {
         super(jdbc, mapper);
