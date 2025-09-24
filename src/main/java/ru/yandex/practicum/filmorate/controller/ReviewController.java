@@ -53,12 +53,15 @@ public class ReviewController {
 
     @GetMapping
     public ResponseEntity<List<ReviewResponseDto>> getReviewsWithCountAndId(
-            @RequestParam(required = false, value = "id") Optional<Long> id,
+            @RequestParam(value = "filmId", required = false) Optional<Long> filmId,
             @RequestParam(value = "count", defaultValue = "10") Integer count) {
-        if (id.isPresent()) {
-            return ResponseEntity.status(HttpStatus.OK).body(reviewService.getAllWithCount(id.get(), count));
+
+        if (filmId.isPresent()) {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reviewService.getAllWithCount(filmId.get(), count));
         } else {
-            return ResponseEntity.status(HttpStatus.OK).body(reviewService.getAllWithCount(count));
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reviewService.getAllWithCount(count));
         }
     }
 

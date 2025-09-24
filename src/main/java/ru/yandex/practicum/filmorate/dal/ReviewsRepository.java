@@ -16,15 +16,16 @@ import java.util.Optional;
 @Repository
 public class ReviewsRepository extends BaseRepository<Review> {
     private static final String FIND_ALL_QUERY = """
-            SELECT r.id, r.content, r.isPositive, r.idUser, r.idFilm, sum(CASE
-                                                                            WHEN rl.likeType = 'LIKE' THEN 1
-                                                                            WHEN rl.likeType = 'DISLIKE' THEN -1
-                                                                            ELSE 0 END) AS useful
+            SELECT r.id, r.content, r.isPositive, r.idUser, r.idFilm,
+                   COALESCE(SUM(CASE
+                       WHEN rl.likeType = 'LIKE' THEN 1
+                       WHEN rl.likeType = 'DISLIKE' THEN -1
+                       ELSE 0 END), 0) AS useful
             FROM Reviews AS r
             LEFT OUTER JOIN REVIEW_LIKES rl ON rl.idReview = r.id
             WHERE r.idFilm = ?
             GROUP BY r.ID
-            ORDER BY useful desc
+            ORDER BY useful DESC, r.id ASC
             LIMIT ?
             """;
     private static final String FIND_ALL_QUERY_WITH_COUNT = """
@@ -50,13 +51,9 @@ public class ReviewsRepository extends BaseRepository<Review> {
             """;
     private static final String INSERT_QUERY = "INSERT INTO Reviews(content, isPositive, idUser, idFilm) VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE Reviews SET content = ?, isPositive = ? WHERE id = ?";
-
-    private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO REVIEW_LIKES (idReview, idUser, likeType) " +
-            "VALUES(?, ?, ?);";
-
+    private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO REVIEW_LIKES (idReview, idUser, likeType) KEY (idReview, idUser) VALUES(?, ?, ?)";
     private static final String REMOVE_REVIEW_QUERY = "DELETE FROM Reviews " +
             "WHERE id = ?";
-
     private static final String REMOVE_LIKE_FROM_REVIEW_QUERY = "DELETE FROM REVIEW_LIKES " +
             "WHERE idReview = ? AND idUser = ? AND likeType = ?";
 
