@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS Reviews (
     isPositive boolean NOT NULL,
     idUser BIGINT,
     idFilm BIGINT,
-    useful INTEGER,
+    useful INTEGER DEFAULT 0,
     FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE,
     FOREIGN KEY (idFilm) REFERENCES FILMS (idFilm) ON DELETE cascade
 );

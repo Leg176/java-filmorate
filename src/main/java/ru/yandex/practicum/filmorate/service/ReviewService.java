@@ -32,6 +32,9 @@ public class ReviewService {
         if (review.getUserId() == null || review.getFilmId() == null) {
             throw new ValidationException("Неверный id");
         }
+        if (review.getIsPositive() == null) {               // ⬅️ добавь это
+            throw new ValidationException("isPositive обязателен");
+        }
         userRepository.getUser(review.getUserId())
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + review.getUserId() + " не найден"));
         filmRepository.getFilm(review.getFilmId())
