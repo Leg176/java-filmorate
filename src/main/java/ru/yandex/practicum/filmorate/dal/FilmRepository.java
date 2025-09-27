@@ -247,8 +247,8 @@ public class FilmRepository extends BaseRepository<Film> {
                     LEFT JOIN Likes l ON f.idFilm = l.idFilm
                     LEFT JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
                     LEFT JOIN Directors d ON fd.idDirector = d.idDirector
-                    WHERE 
-                        (CASE 
+                    WHERE
+                        (CASE
                             WHEN ? = 'title' THEN nameFilm ILIKE ?
                             WHEN ? = 'director' THEN d.name ILIKE ?
                             WHEN ? = 'title,director' THEN (nameFilm ILIKE ? OR d.name ILIKE ?)
