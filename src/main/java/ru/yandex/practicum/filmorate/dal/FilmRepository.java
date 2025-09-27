@@ -240,30 +240,24 @@ public class FilmRepository extends BaseRepository<Film> {
         return findMany(sql.toString(), params.toArray());
     }
 
-    public List<Film> searchByTitle(String query) {
-        String sql = "SELECT * FROM Films WHERE nameFilm ILIKE ?";
-        return findMany(sql, "%" + query + "%");
-    }
-
-    public List<Film> searchByDirector(String query) {
+    public List<Film> searchByTitleOrDirector(String by, String query) {
         String sql = """
-                SELECT DISTINCT f.*
-                 FROM Films f
-                JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
-                JOIN Directors d ON fd.idDirector = d.idDirector
-                WHERE d.name ILIKE ?
+                    SELECT f.*, COUNT(l.idFilm) as likes_count
+                    FROM Films f
+                    LEFT JOIN Likes l ON f.idFilm = l.idFilm
+                    LEFT JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
+                    LEFT JOIN Directors d ON fd.idDirector = d.idDirector
+                    WHERE 
+                        (CASE 
+                            WHEN ? = 'title' THEN nameFilm ILIKE ?
+                            WHEN ? = 'director' THEN d.name ILIKE ?
+                            WHEN ? = 'title,director' THEN (nameFilm ILIKE ? OR d.name ILIKE ?)
+                        END)
+                    GROUP BY f.idFilm
+                    ORDER BY likes_count DESC
                 """;
-        return findMany(sql, "%" + query + "%");
-    }
-
-    public Long getLikeCount(Long filmId) {
-        String sql = "SELECT COUNT(*) FROM Likes WHERE idFilm = ?";
-        return jdbc.queryForObject(sql, Long.class, filmId);
-    }
-
-    public List<Long> findAllLikesFilms(Long userId) {
-        String query = "SELECT idFilm FROM Likes WHERE idUser = ?";
-        return jdbc.queryForList(query, Long.class, userId);
+        return findMany(sql, by, "%" + query + "%", by, "%" + query + "%", by, "%" + query + "%",
+                "%" + query + "%");
     }
 
     public List<Film> getRecommendations(Long userId) {

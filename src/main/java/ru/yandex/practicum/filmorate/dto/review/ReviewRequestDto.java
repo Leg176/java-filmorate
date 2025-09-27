@@ -14,7 +14,9 @@ public class ReviewRequestDto {
     String content;
     @NotNull
     Boolean isPositive;
+    @NotNull
     Long userId;
+    @NotNull
     Long filmId;
     Integer useful;
 }

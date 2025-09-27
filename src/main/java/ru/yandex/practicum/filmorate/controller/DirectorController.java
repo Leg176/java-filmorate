@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -33,12 +34,12 @@ public class DirectorController {
     }
 
     @PostMapping
-    public Director create(@Valid @RequestBody NewDirectorRequest request) {
+    public Director create(@Valid @RequestBody @NotNull NewDirectorRequest request) {
         return directorService.createDirector(request);
     }
 
     @PutMapping
-    public Director update(@Valid @RequestBody UpdateDirectorRequest request) {
+    public Director update(@Valid @RequestBody @NotNull UpdateDirectorRequest request) {
         return directorService.updateDirector(request);
     }
 

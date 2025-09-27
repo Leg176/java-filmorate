@@ -43,7 +43,7 @@ public class DirectorRepository extends BaseRepository<Director> {
         return findMany(FIND_ALL_QUERY);
     }
 
-    public Optional<Director> getDirector(Long idDirector) {
+    public Optional<Director> findById(Long idDirector) {
         return findOne(FIND_BY_ID_QUERY, idDirector);
     }
 

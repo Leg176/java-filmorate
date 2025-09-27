@@ -31,7 +31,7 @@ public class DirectorService {
     }
 
     public Director getDirectorById(Long idDirector) {
-        return directorRepository.getDirector(idDirector)
+        return directorRepository.findById(idDirector)
                 .orElseThrow(() -> new NotFoundException("Режиссёр с id = " + idDirector + " не найден"));
     }
 
@@ -44,9 +44,6 @@ public class DirectorService {
     }
 
     public Director updateDirector(UpdateDirectorRequest request) {
-        if (request == null) {
-            throw new ValidationException("Запрос на обновление данных режиссёра не может быть пустым");
-        }
         validationDirectorIsEmpty(request.getId());
 
         boolean isLogin = directorRepository.getAllDirector().stream()
@@ -56,16 +53,13 @@ public class DirectorService {
         if (isLogin) {
             throw new ValidationException("Режиссёр с именем: " + request.getName() + "существует");
         }
-        Director updatedDirector = DirectorMapper.updateDirectorFields(directorRepository.getDirector(request.getId())
+        Director updatedDirector = DirectorMapper.updateDirectorFields(directorRepository.findById(request.getId())
                 .get(), request);
         directorRepository.update(updatedDirector);
         return updatedDirector;
     }
 
     private void validationRequest(NewDirectorRequest request) {
-        if (request == null) {
-            throw new ValidationException("Запрос на добавление нового режиссёра не может быть пустым");
-        }
         Optional<Director> alreadyExistUser = directorRepository.findByFirstName(request.getName());
         if (alreadyExistUser.isPresent()) {
             throw new ValidationException("Режиссёр с таким именем уже существует");
@@ -73,7 +67,7 @@ public class DirectorService {
     }
 
     public void validationDirectorIsEmpty(Long id) {
-        if (directorRepository.getDirector(id).isEmpty()) {
+        if (directorRepository.findById(id).isEmpty()) {
             throw new NotFoundException("Режиссёр с id = " + id + " в списках зарегестрированных не найден");
         }
     }

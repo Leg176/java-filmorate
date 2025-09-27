@@ -75,7 +75,7 @@ public class ReviewsRepository extends BaseRepository<Review> {
         return review;
     }
 
-    public List<Review> findAll(Long filmId, Integer count) {
+    public List<Review> findByFilmId(Long filmId, Integer count) {
         return findMany(FIND_ALL_QUERY, filmId, count);
     }
 
