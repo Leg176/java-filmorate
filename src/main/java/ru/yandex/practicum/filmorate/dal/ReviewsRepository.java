@@ -21,8 +21,8 @@ public class ReviewsRepository extends BaseRepository<Review> {
                        WHEN rl.likeType = 'LIKE' THEN 1
                        WHEN rl.likeType = 'DISLIKE' THEN -1
                        ELSE 0 END), 0) AS useful
-            FROM Reviews AS r
-            LEFT OUTER JOIN REVIEW_LIKES rl ON rl.idReview = r.id
+            FROM reviews AS r
+            LEFT OUTER JOIN review_likes rl ON rl.idReview = r.id
             WHERE r.idFilm = ?
             GROUP BY r.id
             ORDER BY useful DESC, r.id ASC
@@ -34,8 +34,8 @@ public class ReviewsRepository extends BaseRepository<Review> {
                        WHEN rl.likeType = 'LIKE' THEN 1
                        WHEN rl.likeType = 'DISLIKE' THEN -1
                        ELSE 0 END), 0) AS useful
-            FROM Reviews AS r
-            LEFT OUTER JOIN REVIEW_LIKES rl ON rl.idReview = r.id
+            FROM reviews AS r
+            LEFT OUTER JOIN review_likes rl ON rl.idReview = r.id
             GROUP BY r.id
             ORDER BY useful DESC, r.id ASC
             LIMIT ?
@@ -45,19 +45,20 @@ public class ReviewsRepository extends BaseRepository<Review> {
                                                                           WHEN rl.likeType = 'LIKE' THEN 1
                                                                           WHEN rl.likeType = 'DISLIKE' THEN -1
                                                                           ELSE 0 END), 0) AS useful
-            FROM Reviews AS r
-            LEFT OUTER JOIN REVIEW_LIKES rl ON rl.idReview = r.id
+            FROM reviews AS r
+            LEFT OUTER JOIN review_likes rl ON rl.idReview = r.id
             WHERE r.id = ?
             GROUP BY r.ID
             """;
-    private static final String INSERT_QUERY = "INSERT INTO Reviews(content, isPositive, idUser, idFilm) VALUES (?, ?, ?, ?)";
+    private static final String INSERT_QUERY = "INSERT INTO reviews(content, isPositive, idUser, idFilm) " +
+            "VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE Reviews SET content = ?, isPositive = ? WHERE id = ?";
-    private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO REVIEW_LIKES (idReview, idUser, likeType) KEY (idReview, idUser) VALUES(?, ?, ?)";
+    private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO review_likes (idReview, idUser, likeType) " +
+            "KEY (idReview, idUser) VALUES(?, ?, ?)";
 
-
-    private static final String REMOVE_REVIEW_QUERY = "DELETE FROM Reviews " +
+    private static final String REMOVE_REVIEW_QUERY = "DELETE FROM reviews " +
             "WHERE id = ?";
-    private static final String REMOVE_LIKE_FROM_REVIEW_QUERY = "DELETE FROM REVIEW_LIKES " +
+    private static final String REMOVE_LIKE_FROM_REVIEW_QUERY = "DELETE FROM review_likes " +
             "WHERE idReview = ? AND idUser = ? AND likeType = ?";
 
     public ReviewsRepository(JdbcTemplate jdbc, ReviewsRowMapper mapper) {
