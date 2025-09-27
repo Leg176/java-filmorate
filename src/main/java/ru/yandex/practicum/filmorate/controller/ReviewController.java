@@ -58,7 +58,7 @@ public class ReviewController {
 
         if (filmId.isPresent()) {
             return ResponseEntity.status(HttpStatus.OK)
-                    .body(reviewService.getAllWithCount(filmId.get(), count));
+                    .body(reviewService.getByFilmId(filmId.get(), count));
         } else {
             return ResponseEntity.status(HttpStatus.OK)
                     .body(reviewService.getAllWithCount(count));

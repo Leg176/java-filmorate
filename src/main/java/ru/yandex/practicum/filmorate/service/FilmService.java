@@ -47,32 +47,15 @@ public class FilmService {
     }
 
     public List<FilmDto> getFilmsByDirector(Long directorId, String sortBy) {
-        if (directorId == null) {
-            throw new IllegalArgumentException("Id не может быть равно null");
-        }
-
-        Optional<Director> director = directorRepository.getDirector(directorId);
+        Optional<Director> director = directorRepository.findById(directorId);
         if (director.isEmpty()) {
             throw new NotFoundException("Режиссёр с id = " + directorId + " не найден");
         }
 
         // Получение фильмов режиссера
         List<Film> films = filmRepository.findFilmsByDirector(directorId, sortBy);
+        fillingTheObjectFields(films);
 
-        List<Long> ids = films.stream()
-                .map(Film::getIdFilm)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
-        Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(ids);
-        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
-
-        for (Film film : films) {
-            film.setMpa(mpaMap.get(film.getIdFilm()));
-            film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-        }
         return films.stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
@@ -128,21 +111,7 @@ public class FilmService {
             if (films.isEmpty()) {
                 return Collections.emptyList();
             }
-
-            List<Long> ids = films.stream()
-                    .map(Film::getIdFilm)
-                    .distinct()
-                    .collect(Collectors.toList());
-
-            Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
-            Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(ids);
-            Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
-
-            for (Film film : films) {
-                film.setMpa(mpaMap.get(film.getIdFilm()));
-                film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-                film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-            }
+            fillingTheObjectFields(films);
 
             return films.stream()
                     .map(FilmMapper::mapToFilmDto)
@@ -193,20 +162,7 @@ public class FilmService {
 
     public List<FilmDto> topFilms(int count) {
         List<Film> films = filmRepository.findTopFilm(count);
-        List<Long> ids = films.stream()
-                .map(Film::getIdFilm)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
-        Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(ids);
-        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
-
-        for (Film film : films) {
-            film.setMpa(mpaMap.get(film.getIdFilm()));
-            film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-        }
+        fillingTheObjectFields(films);
         return films.stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
@@ -218,16 +174,8 @@ public class FilmService {
         if (films.isEmpty()) {
             return Collections.emptyList();
         }
+        fillingTheObjectFields(films);
 
-        List<Long> ids = films.stream().map(Film::getIdFilm).distinct().toList();
-        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
-        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
-        Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(ids);
-        for (Film f : films) {
-            f.setMpa(mpaMap.get(f.getIdFilm()));
-            f.setGenres(genreMap.getOrDefault(f.getIdFilm(), new HashSet<>()));
-            f.setDirector(directorMap.getOrDefault(f.getIdFilm(), new HashSet<>()));
-        }
         return films.stream().map(FilmMapper::mapToFilmDto).toList();
     }
 
@@ -357,18 +305,7 @@ public class FilmService {
 
     public List<FilmDto> getCommon(Long userId, Long friendId) {
         List<Film> commonFilms = filmRepository.getCommon(userId, friendId);
-        List<Long> ids = commonFilms.stream()
-                .map(Film::getIdFilm)
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, MotionPictureAssociation> mpaMap = mpaRepository.findMpaByFilmIds(ids);
-        Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(ids);
-
-        for (Film film : commonFilms) {
-            film.setMpa(mpaMap.get(film.getIdFilm()));
-            film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
-        }
+        fillingTheObjectFields(commonFilms);
 
         return commonFilms.stream()
                 .map(FilmMapper::mapToFilmDto)
@@ -378,24 +315,22 @@ public class FilmService {
     public List<FilmDto> searchFilms(String query, String by) {
         log.info("Поиск фильмов по запросу '{}', параметр поиска: {}", query, by);
 
-        List<Film> films = new ArrayList<>();
-
-        // Проверяем, какие критерии поиска указаны
-        if (by.contains("title") && by.contains("director")) {
-            // Поиск одновременно по названию и режиссеру
-            films.addAll(filmRepository.searchByTitle(query));
-            films.addAll(filmRepository.searchByDirector(query));
-        } else if (by.contains("title")) {
-            // Поиск только по названию
-            films = filmRepository.searchByTitle(query);
-        } else if (by.contains("director")) {
-            // Поиск только по режиссеру
-            films = filmRepository.searchByDirector(query);
-        } else {
-            throw new IllegalArgumentException("Неверный параметр поиска. Допустимые значения: 'title', 'director', 'title,director'");
+        // Проверка корректности параметра поиска
+        Set<String> validSearchParameters = Set.of("title", "director", "title,director", "director,title");
+        if (!validSearchParameters.contains(by)) {
+            throw new IllegalArgumentException("Неверный параметр поиска. Допустимые значения: 'title', 'director'," +
+                    " 'title,director'");
         }
 
-        // Получаем дополнительную информацию о фильмах
+        List<Film> films = filmRepository.searchByTitleOrDirector(by, query);
+        fillingTheObjectFields(films);
+
+        return films.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
+
+    private void fillingTheObjectFields(List<Film> films) {
         List<Long> filmIds = films.stream()
                 .map(Film::getIdFilm)
                 .distinct()
@@ -405,22 +340,10 @@ public class FilmService {
         Map<Long, Set<Genre>> genreMap = genreRepository.findGenresByFilmIds(filmIds);
         Map<Long, Set<Director>> directorMap = directorRepository.findDirectorByFilmIds(filmIds);
 
-        // Добавляем информацию о жанрах, рейтинге и режиссерах
         for (Film film : films) {
             film.setMpa(mpaMap.getOrDefault(film.getIdFilm(), null));
             film.setGenres(genreMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
             film.setDirector(directorMap.getOrDefault(film.getIdFilm(), new HashSet<>()));
         }
-
-        // Сортируем фильмы по популярности (по количеству лайков)
-        films.sort((f1, f2) -> {
-            Long likes1 = filmRepository.getLikeCount(f1.getIdFilm());
-            Long likes2 = filmRepository.getLikeCount(f2.getIdFilm());
-            return likes2.compareTo(likes1);
-        });
-
-        return films.stream()
-                .map(FilmMapper::mapToFilmDto)
-                .collect(Collectors.toList());
     }
 }
