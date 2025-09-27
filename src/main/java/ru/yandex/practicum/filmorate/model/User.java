@@ -13,10 +13,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Data
-@EqualsAndHashCode(of = {"idUser"})
+@EqualsAndHashCode(of = {"id"})
 public class User {
 
-    private Long idUser;
+    private Long id;
     @Email(message = "Неверный формат электронной почты")
     @NonNull
     private String email;

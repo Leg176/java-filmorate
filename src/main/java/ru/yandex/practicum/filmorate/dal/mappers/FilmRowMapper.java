@@ -14,7 +14,7 @@ public class FilmRowMapper implements RowMapper<Film> {
     @Override
     public Film mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         Film film = new Film();
-        film.setIdFilm(resultSet.getLong("idFilm"));
+        film.setIdFilm(resultSet.getLong("id"));
         film.setNameFilm(resultSet.getString("nameFilm"));
         film.setDescription(resultSet.getString("description"));
         film.setReleaseDate(resultSet.getDate("releaseDate").toLocalDate());

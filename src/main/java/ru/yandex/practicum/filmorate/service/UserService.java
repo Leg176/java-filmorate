@@ -61,13 +61,10 @@ public class UserService {
     }
 
     public UserDto updateUser(UpdateUserRequest request) {
-        if (request == null) {
-            throw new ValidationException("Запрос на обновление данных пользователя не может быть пустым");
-        }
         validationUserIsEmpty(request.getId());
 
         boolean isLogin = userRepository.findAll().stream()
-                .filter(user -> !user.getIdUser().equals(request.getId()))
+                .filter(user -> !user.getId().equals(request.getId()))
                 .map(User::getLogin)
                 .anyMatch(login -> login.equals(request.getLogin()));
         if (isLogin) {
@@ -124,9 +121,6 @@ public class UserService {
     }
 
     private void validationRequest(NewUserRequest request) {
-        if (request == null) {
-            throw new ValidationException("Запрос на добавление нового пользователя не может быть пустым");
-        }
         Optional<User> alreadyExistUser = userRepository.findByEmail(request.getEmail());
         if (alreadyExistUser.isPresent()) {
             throw new ValidationException("Пользователь с таким имейл уже существует");

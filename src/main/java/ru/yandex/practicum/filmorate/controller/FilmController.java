@@ -37,12 +37,12 @@ public class FilmController {
     }
 
     @PostMapping
-    public FilmDto create(@Valid @RequestBody NewFilmRequest newfilmRequest) {
+    public FilmDto create(@Valid @RequestBody @NotNull NewFilmRequest newfilmRequest) {
         return filmService.createFilm(newfilmRequest);
     }
 
     @PutMapping
-    public FilmDto update(@Valid @RequestBody UpdateFilmRequest updatefilmRequest) {
+    public FilmDto update(@Valid @RequestBody @NotNull UpdateFilmRequest updatefilmRequest) {
         return filmService.updateFilm(updatefilmRequest);
     }
 
