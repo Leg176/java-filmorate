@@ -32,9 +32,12 @@ public class ReviewController {
 
     @PutMapping
     public ResponseEntity<ReviewResponseDto> updateReview(@RequestBody ReviewRequestDto dto) {
+        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) {
+            throw new IllegalArgumentException("Контент отзыва не может быть пустым");
+        }
+
         Review review = reviewService.update(ReviewsMapper.toReview(dto));
         return ResponseEntity.status(HttpStatus.OK).body(ReviewsMapper.toDto(review));
-
     }
 
     @DeleteMapping("/{id}")

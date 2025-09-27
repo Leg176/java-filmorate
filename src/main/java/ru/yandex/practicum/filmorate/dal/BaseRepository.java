@@ -5,7 +5,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.sql.PreparedStatement;
 import java.util.List;
@@ -66,6 +65,6 @@ public abstract class BaseRepository<T> {
         if (keys != null && keys.containsKey(keyColumn)) {
             return ((Number) keys.get(keyColumn)).longValue();
         }
-        throw new NotFoundException("Не удалось сохранить данные");
+        throw new InternalServerException("Не удалось сохранить данные");
     }
 }
