@@ -11,35 +11,35 @@ DROP TABLE IF EXISTS directors CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
 
 CREATE TABLE IF NOT EXISTS mpa_rating (
-     idMpa BIGINT PRIMARY KEY AUTO_INCREMENT,
+     id BIGINT PRIMARY KEY AUTO_INCREMENT,
      nameMpa VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS directors (
-     idDirector BIGINT PRIMARY KEY AUTO_INCREMENT,
+     id BIGINT PRIMARY KEY AUTO_INCREMENT,
      name VARCHAR(25) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS films (
-     idFilm BIGINT PRIMARY KEY AUTO_INCREMENT,
+     id BIGINT PRIMARY KEY AUTO_INCREMENT,
      nameFilm VARCHAR(100) NOT NULL,
      description VARCHAR(2000) NOT NULL,
      releaseDate DATE NOT NULL,
      duration INT NOT NULL CHECK (duration > 0),
      idMpa BIGINT NOT NULL,
-     FOREIGN KEY (idMpa) REFERENCES Mpa_rating(idMpa)
+     FOREIGN KEY (idMpa) REFERENCES mpa_rating(id)
      );
 
 CREATE TABLE IF NOT EXISTS film_directors (
      idFilm BIGINT,
      idDirector BIGINT,
      PRIMARY KEY (idFilm, idDirector),
-     FOREIGN KEY (idFilm) REFERENCES Films(idFilm) ON DELETE CASCADE,
-     FOREIGN Key (idDirector) REFERENCES Directors(idDirector) ON DELETE CASCADE
+     FOREIGN KEY (idFilm) REFERENCES films(id) ON DELETE CASCADE,
+     FOREIGN Key (idDirector) REFERENCES directors(id) ON DELETE CASCADE
      );
 
 CREATE TABLE IF NOT EXISTS genres (
-     idGenre BIGINT PRIMARY KEY AUTO_INCREMENT,
+     id BIGINT PRIMARY KEY AUTO_INCREMENT,
      name VARCHAR(100) NOT NULL
      );
 
@@ -47,12 +47,12 @@ CREATE TABLE IF NOT EXISTS film_genres (
      idFilm BIGINT,
      idGenre BIGINT,
      PRIMARY KEY (idFilm, idGenre),
-     FOREIGN KEY (idFilm) REFERENCES Films(idFilm) ON DELETE CASCADE,
-     FOREIGN Key (idGenre) REFERENCES Genres(idGenre) ON DELETE CASCADE
+     FOREIGN KEY (idFilm) REFERENCES films(id) ON DELETE CASCADE,
+     FOREIGN Key (idGenre) REFERENCES genres(id) ON DELETE CASCADE
      );
 
 CREATE TABLE IF NOT EXISTS users (
-     idUser BIGINT PRIMARY KEY AUTO_INCREMENT,
+     id BIGINT PRIMARY KEY AUTO_INCREMENT,
      email VARCHAR(255) NOT NULL UNIQUE,
      login VARCHAR(100) NOT NULL,
      name VARCHAR(100),
@@ -63,16 +63,16 @@ CREATE TABLE IF NOT EXISTS likes (
      idFilm BIGINT,
      idUser BIGINT,
      PRIMARY KEY (idFilm, idUser),
-     FOREIGN KEY (idFilm) REFERENCES Films(idFilm) ON DELETE CASCADE,
-     FOREIGN KEY (idUser) REFERENCES Users(idUser) ON DELETE CASCADE
+     FOREIGN KEY (idFilm) REFERENCES films(id) ON DELETE CASCADE,
+     FOREIGN KEY (idUser) REFERENCES users(id) ON DELETE CASCADE
      );
 
  CREATE TABLE IF NOT EXISTS friends (
       idUser BIGINT,
       idUserFriends BIGINT,
       PRIMARY KEY (idUser, idUserFriends),
-      FOREIGN KEY (idUser) REFERENCES Users(idUser) ON DELETE CASCADE,
-      FOREIGN KEY (idUserFriends) REFERENCES Users(idUser) ON DELETE CASCADE
+      FOREIGN KEY (idUser) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (idUserFriends) REFERENCES users(id) ON DELETE CASCADE
       );
 
 CREATE TABLE IF NOT EXISTS reviews (
@@ -82,8 +82,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     idUser BIGINT,
     idFilm BIGINT,
     useful INTEGER DEFAULT 0,
-    FOREIGN KEY (idUser) REFERENCES USERS(idUser) ON DELETE CASCADE,
-    FOREIGN KEY (idFilm) REFERENCES FILMS (idFilm) ON DELETE CASCADE
+    FOREIGN KEY (idUser) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (idFilm) REFERENCES films(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS review_likes (
@@ -91,8 +91,8 @@ CREATE TABLE IF NOT EXISTS review_likes (
     idUser BIGINT,
     likeType VARCHAR NOT NULL,
     PRIMARY KEY (idReview, idUser),
-    FOREIGN KEY (idReview) REFERENCES Reviews(id) ON DELETE CASCADE,
-    FOREIGN KEY (idUser) REFERENCES Users(idUser) ON DELETE CASCADE
+    FOREIGN KEY (idReview) REFERENCES reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (idUser) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -100,6 +100,6 @@ CREATE TABLE IF NOT EXISTS events (
     idEntity BIGINT NOT NULL,
     eventType varchar NOT NULL,
     operation varchar NOT NULL,
-    idUser BIGINT REFERENCES USERS(idUser) ON DELETE CASCADE,
+    idUser BIGINT REFERENCES users(id) ON DELETE CASCADE,
     timeCreated timestamp NOT NULL
 );

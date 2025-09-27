@@ -13,12 +13,12 @@ import java.util.stream.IntStream;
 public class GenreRepository extends BaseRepository<Genre> {
 
     private static final String FIND_ALL_QUERY = "SELECT * FROM genres";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM genres WHERE idGenre = ?";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM genres WHERE id = ?";
     private static final String FIND_GENRES_BY_ID_FILM_QUERY = "SELECT g.* FROM genres g " +
-            "INNER JOIN film_genres fg ON g.idGenre = fg.idGenre WHERE fg.idFilm = ?";
-    private static final String FIND_BY_IDS_QUERY = "SELECT * FROM genres WHERE idGenre IN (?)";
-    private static final String FIND_ALL_GENRES_FOR_ALL_FILMS = "SELECT DISTINCT fg.idFilm, g.idGenre, " +
-            "g.name FROM film_genres fg INNER JOIN genres g ON fg.idGenre = g.idGenre WHERE fg.idFilm " +
+            "INNER JOIN film_genres fg ON g.id = fg.idGenre WHERE fg.idFilm = ?";
+    private static final String FIND_BY_IDS_QUERY = "SELECT * FROM genres WHERE id IN (?)";
+    private static final String FIND_ALL_GENRES_FOR_ALL_FILMS = "SELECT DISTINCT fg.idFilm, g.id, " +
+            "g.name FROM film_genres fg INNER JOIN genres g ON fg.idGenre = g.id WHERE fg.idFilm " +
             "IN (%s) ORDER BY fg.idFilm";
 
     public GenreRepository(JdbcTemplate jdbc, RowMapper<Genre> mapper) {

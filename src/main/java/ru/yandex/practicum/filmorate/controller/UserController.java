@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -37,12 +38,12 @@ public class UserController {
     }
 
     @PostMapping
-    public UserDto create(@Valid @RequestBody NewUserRequest userRequest) {
+    public UserDto create(@Valid @RequestBody @NotNull NewUserRequest userRequest) {
         return userService.createUser(userRequest);
     }
 
     @PutMapping
-    public UserDto update(@Valid @RequestBody UpdateUserRequest request) {
+    public UserDto update(@Valid @RequestBody @NotNull UpdateUserRequest request) {
         return userService.updateUser(request);
     }
 
@@ -89,5 +90,4 @@ public class UserController {
     public List<FilmDto> getRecommendations(@PathVariable Long id) {
         return recommendationService.getRecommendations(id);
     }
-
 }

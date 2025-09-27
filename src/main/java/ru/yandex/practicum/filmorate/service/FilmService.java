@@ -62,7 +62,6 @@ public class FilmService {
     }
 
     public FilmDto createFilm(NewFilmRequest request) {
-        validateRequest(request, "Запрос на добавление нового фильма не может быть пустым");
         checkReleaseDate(request.getReleaseDate());
 
         MotionPictureAssociation mpaRequest = request.getMpa();
@@ -123,7 +122,6 @@ public class FilmService {
     }
 
     public FilmDto updateFilm(UpdateFilmRequest request) {
-        validateRequest(request, "Запрос на обновление данных фильма не может быть пустым");
         if (request.hasReleaseDate()) {
             checkReleaseDate(request.getReleaseDate());
         }
@@ -237,14 +235,10 @@ public class FilmService {
                 .orElseThrow(() -> new NotFoundException("Фильм с id = " + idFilm + " в базе данных не найден"));
     }
 
-    private void validateRequest(Object request, String message) {
-        if (request == null) {
-            throw new ValidationException(message);
-        }
-    }
-
     private MotionPictureAssociation validateAndGetMpa(MotionPictureAssociation mpa) {
-        validateRequest(mpa, "Mpa в запросе не может быть пустым");
+        if (mpa == null) {
+            throw new ValidationException("Mpa в запросе не может быть пустым");
+        }
         return mpaRepository.getMpa(mpa.getId())
                 .orElseThrow(() -> new NotFoundException("Mpa с id = " + mpa.getId() + " не найден"));
     }

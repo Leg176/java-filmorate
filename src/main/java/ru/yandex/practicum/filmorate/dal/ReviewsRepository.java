@@ -52,7 +52,7 @@ public class ReviewsRepository extends BaseRepository<Review> {
             """;
     private static final String INSERT_QUERY = "INSERT INTO reviews(content, isPositive, idUser, idFilm) " +
             "VALUES (?, ?, ?, ?)";
-    private static final String UPDATE_QUERY = "UPDATE Reviews SET content = ?, isPositive = ? WHERE id = ?";
+    private static final String UPDATE_QUERY = "UPDATE reviews SET content = ?, isPositive = ? WHERE id = ?";
     private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO review_likes (idReview, idUser, likeType) " +
             "KEY (idReview, idUser) VALUES(?, ?, ?)";
 

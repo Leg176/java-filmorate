@@ -25,22 +25,22 @@ public class InMemoryUserStorage implements UserStorage {
     @Override
     public User create(User user) {
         log.debug("Сохраняем пользователя в коллекцию");
-        users.put(user.getIdUser(), user);
-        log.info("Пользователь успешно добавлени с id: {}", user.getIdUser());
+        users.put(user.getId(), user);
+        log.info("Пользователь успешно добавлени с id: {}", user.getId());
         return user;
     }
 
     @Override
     public User update(User newUser) {
-        log.info("Обновляем данные о пользователя с id {}.", newUser.getIdUser());
+        log.info("Обновляем данные о пользователя с id {}.", newUser.getId());
         log.trace("Проверка наличия в коллекции пользователя с id указанным в теле метода PUT");
-        if (users.containsKey(newUser.getIdUser())) {
-            users.put(newUser.getIdUser(), newUser);
+        if (users.containsKey(newUser.getId())) {
+            users.put(newUser.getId(), newUser);
             log.info("Данные о пользователе {} обновлены", newUser);
             return newUser;
         }
-        log.warn("Пользователь с id = {} не найден", newUser.getIdUser());
-        throw new NotFoundException("Пользователь с id = " + newUser.getIdUser() + " не найден");
+        log.warn("Пользователь с id = {} не найден", newUser.getId());
+        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
     }
 
     @Override
