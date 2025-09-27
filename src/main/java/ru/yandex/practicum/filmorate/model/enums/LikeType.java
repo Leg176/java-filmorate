@@ -4,3 +4,4 @@ public enum LikeType {
     LIKE,
     DISLIKE
 }
+
