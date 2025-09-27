@@ -23,11 +23,11 @@ public class FilmRepository extends BaseRepository<Film> {
             "UPDATE films SET nameFilm = ?, description = ?, releaseDate = ?, duration = ?, idMpa = ? WHERE id = ?";
     private static final String FIND_TOP_FILMS_QUERY =
             "SELECT f.id, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa, " +
-                    "       mr.nameMpa AS mpa_name " +
+                    "mr.nameMpa AS mpa_name " +
                     "FROM films f " +
                     "LEFT JOIN mpa_rating mr ON f.idMpa = mr.id " +
                     "LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM likes GROUP BY idFilm " +
-                    "            ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.id " +
+                    "ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.id " +
                     "ORDER BY q.counter DESC LIMIT ?";
     private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM likes l WHERE idFilm = ?";
     private static final String ADD_LIKE_QUERY = "MERGE INTO likes (idFilm, idUser) KEY (idFilm, idUser) VALUES (?, ?)";
@@ -52,14 +52,11 @@ public class FilmRepository extends BaseRepository<Film> {
                             GROUP BY l.idFilm) сl ON сl.idFilm = сf.id
             ORDER BY сl.cnt desc
             """;
-
     private static final String ADD_DIRECTOR_QUERY = "MERGE INTO film_directors (idFilm, idDirector) " +
             "KEY (idFilm, idDirector) VALUES (?, ?)";
     private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM film_directors WHERE idFilm = ? AND idDirector = ?";
     private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM films f JOIN film_directors fd ON " +
             "f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
-    /* ▼▼▼ NEW: сортировка на уровне SQL ▼▼▼ */
-
     private static final String FIND_BY_DIRECTOR_ORDER_BY_YEAR = """
             SELECT f.*
             FROM films f
@@ -76,9 +73,6 @@ public class FilmRepository extends BaseRepository<Film> {
             GROUP BY f.id, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
             ORDER BY COUNT(l.idUser) DESC, f.id
             """;
-    /* ▲▲▲ NEW ▲▲▲ */
-
-    /* ▼▼▼ NEW: рекомендации без глубоких вложенных IN ▼▼▼ */
     private static final String GET_RECOMMENDATION = """
             SELECT f.id, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa,
                    COUNT(*) AS score
@@ -91,8 +85,6 @@ public class FilmRepository extends BaseRepository<Film> {
             GROUP BY f.id, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
             ORDER BY score DESC, f.id
             """;
-    /* ▲▲▲ NEW ▲▲▲ */
-
     private static final String FIND_MOST_POPULAR_TEMPLATE = """
               SELECT f.id, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
               FROM films f

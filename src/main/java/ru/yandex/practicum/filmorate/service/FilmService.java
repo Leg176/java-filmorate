@@ -128,7 +128,6 @@ public class FilmService {
         // Получаем объект по id запроса
         Film film = validationFilm(request.getId());
         MotionPictureAssociation mpa = validateAndGetMpa(request.getMpa());
-
         //Находим жанры принадлежавшие старому объекту Film
         List<Genre> genresOldFilm = genreRepository.findGenresFilm(film.getIdFilm());
         //Находим режиссёров принадлежавших старому объекту Film
