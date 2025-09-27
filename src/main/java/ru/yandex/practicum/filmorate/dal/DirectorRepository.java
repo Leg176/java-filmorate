@@ -14,18 +14,18 @@ import java.util.stream.IntStream;
 @Repository
 public class DirectorRepository extends BaseRepository<Director> {
 
-    private static final String FIND_ALL_QUERY = "SELECT * FROM Directors";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM Directors WHERE idDirector = ?";
-    private static final String INSERT_QUERY = "INSERT INTO Directors(name) VALUES (?)";
-    private static final String UPDATE_QUERY = "UPDATE Directors SET name = ? WHERE idDirector = ?";
-    private static final String DELETE_QUERY = "DELETE FROM Directors WHERE idDirector = ?";
-    private static final String FIND_BY_FIRST_NAME_QUERY = "SELECT * FROM Directors WHERE name = ?";
-    private static final String FIND_BY_IDS_QUERY = "SELECT * FROM Directors WHERE idDirector IN (?)";
+    private static final String FIND_ALL_QUERY = "SELECT * FROM directors";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM directors WHERE idDirector = ?";
+    private static final String INSERT_QUERY = "INSERT INTO directors(name) VALUES (?)";
+    private static final String UPDATE_QUERY = "UPDATE directors SET name = ? WHERE idDirector = ?";
+    private static final String DELETE_QUERY = "DELETE FROM directors WHERE idDirector = ?";
+    private static final String FIND_BY_FIRST_NAME_QUERY = "SELECT * FROM directors WHERE name = ?";
+    private static final String FIND_BY_IDS_QUERY = "SELECT * FROM directors WHERE idDirector IN (?)";
     private static final String FIND_ALL_DIRECTOR_FOR_ALL_FILMS = "SELECT DISTINCT fd.idFilm AS filmId, d.idDirector, " +
-            "d.name FROM FilmDirectors fd INNER JOIN Directors d ON fd.idDirector = d.idDirector " +
+            "d.name FROM film_directors fd INNER JOIN directors d ON fd.idDirector = d.idDirector " +
             "WHERE fd.idFilm IN (%s) ORDER BY fd.idFilm";
-    private static final String FIND_DIRECTORS_BY_ID_FILM_QUERY = "SELECT d.* FROM Directors d " +
-            "INNER JOIN FilmDirectors fd ON d.idDirector = fd.idDirector WHERE fd.idFilm = ?";
+    private static final String FIND_DIRECTORS_BY_ID_FILM_QUERY = "SELECT d.* FROM directors d " +
+            "INNER JOIN film_directors fd ON d.idDirector = fd.idDirector WHERE fd.idFilm = ?";
 
     public List<Director> findDirectorsFilm(long idFilm) {
         return findMany(FIND_DIRECTORS_BY_ID_FILM_QUERY, idFilm);

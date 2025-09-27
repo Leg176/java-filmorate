@@ -19,20 +19,20 @@ public class UserRepository extends BaseRepository<User> {
     @Autowired
     private EntityManager entityManager;
 
-    private static final String FIND_ALL_FRIENDS_QUERY = "SELECT idUserFriends FROM Friends WHERE idUser = ?";
-    private static final String FIND_ALL_QUERY = "SELECT * FROM Users";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM Users WHERE idUser = ?";
-    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM Users WHERE email = ?";
-    private static final String INSERT_QUERY = "INSERT INTO Users(email, login, name, birthday)" +
+    private static final String FIND_ALL_FRIENDS_QUERY = "SELECT idUserFriends FROM friends WHERE idUser = ?";
+    private static final String FIND_ALL_QUERY = "SELECT * FROM users";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE idUser = ?";
+    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM users WHERE email = ?";
+    private static final String INSERT_QUERY = "INSERT INTO users(email, login, name, birthday)" +
             "VALUES (?, ?, ?, ?)";
-    private static final String ADD_FRIEND_QUERY = "INSERT INTO Friends(idUser, idUserFriends) VALUES (?, ?)";
-    private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.idUserFriends FROM Friends f1 WHERE f1.idUser = ? " +
-                    "AND f1.idUserFriends IN ( SELECT f2.idUserFriends FROM Friends f2 WHERE f2.idUser = ?)";
-    private static final String DELETE_FRIEND_QUERY = "DELETE FROM Friends WHERE idUser = ? AND idUserFriends = ?";
-    private static final String DELETE_USER_QUERY = "DELETE FROM Users WHERE idUser = ?";
-    private static final String UPDATE_QUERY = "UPDATE Users SET email = ?, login = ?, name = ?, birthday = ?" +
+    private static final String ADD_FRIEND_QUERY = "INSERT INTO friends(idUser, idUserFriends) VALUES (?, ?)";
+    private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.idUserFriends FROM friends f1 WHERE f1.idUser = ? " +
+                    "AND f1.idUserFriends IN ( SELECT f2.idUserFriends FROM friends f2 WHERE f2.idUser = ?)";
+    private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE idUser = ? AND idUserFriends = ?";
+    private static final String DELETE_USER_QUERY = "DELETE FROM users WHERE idUser = ?";
+    private static final String UPDATE_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
             " WHERE idUser = ?";
-    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM Friends f WHERE f.idUser = :idUser " +
+    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM friends f WHERE f.idUser = :idUser " +
             "AND f.idUserFriends = :idUserFriends";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {

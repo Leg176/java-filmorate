@@ -14,39 +14,39 @@ public class FilmRepository extends BaseRepository<Film> {
         super(jdbc, mapper);
     }
 
-    private static final String FIND_ALL_QUERY = "SELECT * FROM Films";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM Films WHERE idFilm = ?";
-    private static final String FIND_BY_NAME_FILM_QUERY = "SELECT * FROM Films WHERE nameFilm = ?";
+    private static final String FIND_ALL_QUERY = "SELECT * FROM films";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM films WHERE idFilm = ?";
+    private static final String FIND_BY_NAME_FILM_QUERY = "SELECT * FROM films WHERE nameFilm = ?";
 
     private static final String INSERT_QUERY =
-            "INSERT INTO Films(nameFilm, description, releaseDate, duration, idMpa) VALUES (?, ?, ?, ?, ?)";
+            "INSERT INTO films(nameFilm, description, releaseDate, duration, idMpa) VALUES (?, ?, ?, ?, ?)";
 
     private static final String UPDATE_QUERY =
-            "UPDATE Films SET nameFilm = ?, description = ?, releaseDate = ?, duration = ?, idMpa = ? WHERE idFilm = ?";
+            "UPDATE films SET nameFilm = ?, description = ?, releaseDate = ?, duration = ?, idMpa = ? WHERE idFilm = ?";
 
     private static final String FIND_TOP_FILMS_QUERY =
             "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa, " +
                     "       mr.nameMpa AS mpa_name " +
-                    "FROM Films f " +
-                    "LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa " +
-                    "LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM Likes GROUP BY idFilm " +
+                    "FROM films f " +
+                    "LEFT JOIN mpa_rating mr ON f.idMpa = mr.idMpa " +
+                    "LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM likes GROUP BY idFilm " +
                     "            ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.idFilm " +
                     "ORDER BY q.counter DESC LIMIT ?";
 
-    private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM Likes l WHERE idFilm = ?";
-    private static final String ADD_LIKE_QUERY = "MERGE INTO Likes (idFilm, idUser) KEY (idFilm, idUser) VALUES (?, ?)";
-    private static final String DELETE_LIKE_QUERY = "DELETE FROM Likes WHERE idFilm = ? AND idUser = ?";
-    private static final String DELETE_FILM_QUERY = "DELETE FROM Films WHERE idFilm = ?";
-    private static final String LIKES_QUERY = "SELECT idFilm, COUNT(*) as likesCount FROM Likes WHERE idFilm IN (";
-    private static final String ADD_GENRE_QUERY = "MERGE INTO FilmGenres (idFilm, idGenre) KEY (idFilm, idGenre) VALUES (?, ?)";
-    private static final String DELETE_GENRE_QUERY = "DELETE FROM FilmGenres WHERE idFilm = ? AND idGenre = ?";
-
+    private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM likes l WHERE idFilm = ?";
+    private static final String ADD_LIKE_QUERY = "MERGE INTO likes (idFilm, idUser) KEY (idFilm, idUser) VALUES (?, ?)";
+    private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE idFilm = ? AND idUser = ?";
+    private static final String DELETE_FILM_QUERY = "DELETE FROM films WHERE idFilm = ?";
+    private static final String LIKES_QUERY = "SELECT idFilm, COUNT(*) as likesCount FROM likes WHERE idFilm IN (";
+    private static final String ADD_GENRE_QUERY = "MERGE INTO film_genres (idFilm, idGenre) KEY (idFilm, idGenre) " +
+            "VALUES (?, ?)";
+    private static final String DELETE_GENRE_QUERY = "DELETE FROM film_genres WHERE idFilm = ? AND idGenre = ?";
     private static final String FIND_COMMON_FILMS = """
             SELECT сf.*
             FROM (SELECT f.*, mr.namempa
             	FROM likes l1
             	INNER JOIN films f ON f.idFilm = l1.idFilm
-            	LEFT JOIN Mpa_rating mr ON f.idMpa = mr.idMpa
+            	LEFT JOIN mpa_rating mr ON f.idMpa = mr.idMpa
             	INNER JOIN likes l2 ON l2.idFilm = l1.idFilm
                             AND l2.idUser = ?
                             WHERE l1.idUser = ?) сf
@@ -57,25 +57,26 @@ public class FilmRepository extends BaseRepository<Film> {
             ORDER BY сl.cnt desc
             """;
 
-    private static final String ADD_DIRECTOR_QUERY = "MERGE INTO FilmDirectors (idFilm, idDirector) KEY (idFilm, idDirector) VALUES (?, ?)";
-    private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM FilmDirectors WHERE idFilm = ? AND idDirector = ?";
+    private static final String ADD_DIRECTOR_QUERY = "MERGE INTO film_directors (idFilm, idDirector) " +
+            "KEY (idFilm, idDirector) VALUES (?, ?)";
+    private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM film_directors WHERE idFilm = ? AND idDirector = ?";
 
-    private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
-
+    private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM films f JOIN film_directors fd ON " +
+            "f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
     /* ▼▼▼ NEW: сортировка на уровне SQL ▼▼▼ */
     private static final String FIND_BY_DIRECTOR_ORDER_BY_YEAR = """
             SELECT f.*
-            FROM Films f
-            JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
+            FROM films f
+            JOIN film_directors fd ON f.idFilm = fd.idFilm
             WHERE fd.idDirector = ?
             ORDER BY f.releaseDate, f.idFilm
             """;
 
     private static final String FIND_BY_DIRECTOR_ORDER_BY_LIKES = """
             SELECT f.*
-            FROM Films f
-            JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
-            LEFT JOIN Likes l ON l.idFilm = f.idFilm
+            FROM films f
+            JOIN film_directors fd ON f.idFilm = fd.idFilm
+            LEFT JOIN likes l ON l.idFilm = f.idFilm
             WHERE fd.idDirector = ?
             GROUP BY f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
             ORDER BY COUNT(l.idUser) DESC, f.idFilm
@@ -86,11 +87,11 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String GET_RECOMMENDATION = """
             SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa,
                    COUNT(*) AS score
-            FROM LIKES l_sim
-            JOIN LIKES l_cand ON l_cand.idUser = l_sim.idUser
-            JOIN FILMS f      ON f.idFilm     = l_cand.idFilm
-            WHERE l_sim.idFilm IN (SELECT idFilm FROM LIKES WHERE idUser = ?)
-              AND l_cand.idFilm NOT IN (SELECT idFilm FROM LIKES WHERE idUser = ?)
+            FROM likes l_sim
+            JOIN likes l_cand ON l_cand.idUser = l_sim.idUser
+            JOIN films f ON f.idFilm     = l_cand.idFilm
+            WHERE l_sim.idFilm IN (SELECT idFilm FROM likes WHERE idUser = ?)
+              AND l_cand.idFilm NOT IN (SELECT idFilm FROM likes WHERE idUser = ?)
               AND l_cand.idUser <> ?
             GROUP BY f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
             ORDER BY score DESC, f.idFilm
@@ -99,17 +100,17 @@ public class FilmRepository extends BaseRepository<Film> {
 
     private static final String FIND_MOST_POPULAR_TEMPLATE = """
               SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
-              FROM Films f
-              LEFT JOIN Likes l ON l.idFilm = f.idFilm
-              LEFT JOIN FilmGenres fg ON fg.idFilm = f.idFilm
+              FROM films f
+              LEFT JOIN likes l ON l.idFilm = f.idFilm
+              LEFT JOIN film_genres fg ON fg.idFilm = f.idFilm
             """;
 
     private static final String SEARCH_BY_TITTLE_OR_DIRECTOR = """
                 SELECT f.*, COUNT(l.idFilm) as likes_count
-                FROM Films f
-                LEFT JOIN Likes l ON f.idFilm = l.idFilm
-                LEFT JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
-                LEFT JOIN Directors d ON fd.idDirector = d.idDirector
+                FROM films f
+                LEFT JOIN likes l ON f.idFilm = l.idFilm
+                LEFT JOIN film_directors fd ON f.idFilm = fd.idFilm
+                LEFT JOIN directors d ON fd.idDirector = d.idDirector
                 WHERE
                     (CASE
                         WHEN ? = 'title' THEN nameFilm ILIKE ?
