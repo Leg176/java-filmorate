@@ -5,11 +5,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
-import java.sql.PreparedStatement;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public abstract class BaseRepository<T> {
@@ -52,20 +49,22 @@ public abstract class BaseRepository<T> {
         }
     }
 
-    protected long insert(String query, String keyColumn, Object... params) {
+    protected long insert(String sql, String keyColumn, Object... params) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(conn -> {
-            PreparedStatement ps = conn.prepareStatement(query, new String[]{keyColumn});
-            for (int i = 0; i < params.length; i++) {
-                ps.setObject(i + 1, params[i]);
-            }
+        jdbc.update(con -> {
+            var ps = con.prepareStatement(sql, new String[]{keyColumn});
+            for (int i = 0; i < params.length; i++) ps.setObject(i + 1, params[i]);
             return ps;
         }, keyHolder);
 
-        Map<String, Object> keys = keyHolder.getKeys();
-        if (keys != null && keys.containsKey(keyColumn)) {
-            return ((Number) keys.get(keyColumn)).longValue();
+        Number key = keyHolder.getKey();
+        if (key != null) return key.longValue();
+
+        var keys = keyHolder.getKeys();
+        if (keys != null && !keys.isEmpty()) {
+            Object any = keys.values().iterator().next();
+            if (any instanceof Number n) return n.longValue();
         }
-        throw new NotFoundException("Не удалось сохранить данные");
+        throw new InternalServerException("Не удалось получить сгенерированный ключ для SQL: " + sql);
     }
 }

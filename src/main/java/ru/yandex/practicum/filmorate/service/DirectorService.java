@@ -46,15 +46,15 @@ public class DirectorService {
     public Director updateDirector(UpdateDirectorRequest request) {
         validationDirectorIsEmpty(request.getId());
 
-        boolean isLogin = directorRepository.getAllDirector().stream()
-                .filter(director -> !director.getId().equals(request.getId()))
-                .map(Director::getName)
-                .anyMatch(firstName -> firstName.equals(request.getName()));
-        if (isLogin) {
-            throw new ValidationException("Режиссёр с именем: " + request.getName() + "существует");
+        Optional<Director> sameName = directorRepository.findByFirstName(request.getName());
+        if (sameName.isPresent() && !sameName.get().getId().equals(request.getId())) {
+            throw new ValidationException("Режиссёр с именем: " + request.getName() + " существует");
         }
-        Director updatedDirector = DirectorMapper.updateDirectorFields(directorRepository.findById(request.getId())
-                .get(), request);
+
+        Director current = directorRepository.findById(request.getId())
+                .orElseThrow(() -> new NotFoundException("Режиссёр с id = " + request.getId() + " не найден"));
+        Director updatedDirector = DirectorMapper.updateDirectorFields(current, request);
+
         directorRepository.update(updatedDirector);
         return updatedDirector;
     }

@@ -6,6 +6,7 @@ import ru.yandex.practicum.filmorate.dal.ReviewsRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.dto.review.ReviewResponseDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.ReviewsMapper;
 import ru.yandex.practicum.filmorate.model.Review;
 import ru.yandex.practicum.filmorate.model.enums.EventType;
@@ -28,45 +29,56 @@ public class ReviewService {
     }
 
     public ReviewResponseDto create(Review review) {
-        validationUser(review.getUserId());
-        validationFilm(review.getFilmId());
+        if (review.getUserId() == null || review.getFilmId() == null) {
+            throw new ValidationException("Неверный id");
+        }
+        userRepository.getUser(review.getUserId())
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + review.getUserId() + " не найден"));
+        filmRepository.getFilm(review.getFilmId())
+                .orElseThrow(() -> new NotFoundException("Фильм с id=" + review.getFilmId() + " не найден"));
 
         Review createdReview = reviewsRepository.save(review);
         eventService.add(createdReview.getId(), createdReview.getUserId(), EventType.REVIEW);
         return ReviewsMapper.toDto(createdReview);
     }
 
-    public void delete(Long reviewId) {
-        Review review = getById(reviewId);
-
-        reviewsRepository.deleteReview(reviewId);
+    public void delete(Long id) {
+        Review review = reviewsRepository.getById(id).orElseThrow(
+                () -> new NotFoundException("пользователя с id :" + id + " не существует")
+        );
+        reviewsRepository.deleteReview(id);
         eventService.delete(review.getId(), review.getUserId(), EventType.REVIEW);
     }
 
     public Review update(Review review) {
-        Review currentReview = getById(review.getId());
-
+        Review currentReview = reviewsRepository.getById(review.getId()).orElseThrow(
+                () -> new NotFoundException("отзыв с id: " + review.getId() + " не найден")
+        );
         Review updatedReview = ReviewsMapper.updateReviewFields(currentReview, review);
         eventService.update(updatedReview.getId(), updatedReview.getUserId(), EventType.REVIEW);
         return reviewsRepository.update(updatedReview);
     }
 
     public void addLike(Long reviewId, Long userId, LikeType like) {
-        getById(reviewId);
-        validationUser(userId);
+        reviewsRepository.getById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Отзыв с id=" + reviewId + " не найден"));
+        userRepository.getUser(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
 
         reviewsRepository.insertLikeDislikeToReview(reviewId, userId, like);
     }
 
     public void deleteLike(Long reviewId, Long userId, LikeType like) {
-        getById(reviewId);
-        validationUser(userId);
+        reviewsRepository.getById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Отзыв с id=" + reviewId + " не найден"));
+        userRepository.getUser(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
 
         reviewsRepository.removeLikeFromReview(reviewId, userId, like);
     }
 
-    public List<ReviewResponseDto> getByFilmId(Long id, Integer count) {
-        return reviewsRepository.findByFilmId(id, count).stream()
+    public List<ReviewResponseDto> getAllWithCount(Long id, Integer count) {
+        return reviewsRepository.findAll(id, count).stream()
                 .map(ReviewsMapper::toDto)
                 .toList();
     }
@@ -77,18 +89,8 @@ public class ReviewService {
                 .toList();
     }
 
-    public Review getById(Long reviewId) {
-        return reviewsRepository.getById(reviewId)
-                .orElseThrow(() -> new NotFoundException("Отзыв с id=" + reviewId + " не найден"));
-    }
-
-    private void validationUser(Long userId) {
-        userRepository.getUser(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
-    }
-
-    private void validationFilm(Long filmId) {
-        filmRepository.getFilm(filmId)
-                .orElseThrow(() -> new NotFoundException("Фильм с id=" + filmId + " не найден"));
+    public Review getById(Long id) {
+        return reviewsRepository.getById(id)
+                .orElseThrow(() -> new NotFoundException("такого ревью не существует"));
     }
 }
