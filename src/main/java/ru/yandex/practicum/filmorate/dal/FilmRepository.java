@@ -87,6 +87,28 @@ public class FilmRepository extends BaseRepository<Film> {
                 WHERE idUser = ?
             )
             """;
+    private static final String FIND_MOST_POPULAR_TEMPLATE = """
+              SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
+              FROM Films f
+              LEFT JOIN Likes l ON l.idFilm = f.idFilm
+              LEFT JOIN FilmGenres fg ON fg.idFilm = f.idFilm
+            """;
+
+    private static final String SEARCH_BY_TITTLE_OR_DIRECTOR = """
+                SELECT f.*, COUNT(l.idFilm) as likes_count
+                FROM Films f
+                LEFT JOIN Likes l ON f.idFilm = l.idFilm
+                LEFT JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
+                LEFT JOIN Directors d ON fd.idDirector = d.idDirector
+                WHERE
+                    (CASE
+                        WHEN ? = 'title' THEN nameFilm ILIKE ?
+                        WHEN ? = 'director' THEN d.name ILIKE ?
+                        WHEN ? = 'title,director' THEN (nameFilm ILIKE ? OR d.name ILIKE ?)
+                    END)
+                GROUP BY f.idFilm
+                ORDER BY likes_count DESC
+            """;
 
     public List<Film> findFilmsByDirector(Long directorId, String sortBy) {
 
@@ -212,23 +234,21 @@ public class FilmRepository extends BaseRepository<Film> {
     }
 
     public List<Film> findMostPopular(int limit, Long genreId, Integer year) {
-        StringBuilder sql = new StringBuilder(
-                "SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa " +
-                        "FROM Films f " +
-                        "LEFT JOIN Likes l ON l.idFilm = f.idFilm " +
-                        "LEFT JOIN FilmGenres fg ON fg.idFilm = f.idFilm " +
-                        "WHERE 1=1 "
-        );
-
+        List<String> cond = new ArrayList<>();
         List<Object> params = new ArrayList<>();
 
         if (genreId != null) {
-            sql.append("AND fg.idGenre = ? ");
+            cond.add("fg.idGenre = ?");
             params.add(genreId);
         }
         if (year != null) {
-            sql.append("AND EXTRACT(YEAR FROM f.releaseDate) = ? ");
+            cond.add("EXTRACT(YEAR FROM f.releaseDate) = ?");
             params.add(year);
+        }
+
+        StringBuilder sql = new StringBuilder(FIND_MOST_POPULAR_TEMPLATE);
+        if (!cond.isEmpty()) {
+            sql.append("WHERE ").append(String.join(" AND ", cond)).append(' ');
         }
 
         sql.append("GROUP BY f.idFilm ")
@@ -236,27 +256,13 @@ public class FilmRepository extends BaseRepository<Film> {
                 .append("LIMIT ?");
 
         params.add(limit);
-
         return findMany(sql.toString(), params.toArray());
     }
 
     public List<Film> searchByTitleOrDirector(String by, String query) {
-        String sql = """
-                    SELECT f.*, COUNT(l.idFilm) as likes_count
-                    FROM Films f
-                    LEFT JOIN Likes l ON f.idFilm = l.idFilm
-                    LEFT JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
-                    LEFT JOIN Directors d ON fd.idDirector = d.idDirector
-                    WHERE
-                        (CASE
-                            WHEN ? = 'title' THEN nameFilm ILIKE ?
-                            WHEN ? = 'director' THEN d.name ILIKE ?
-                            WHEN ? = 'title,director' THEN (nameFilm ILIKE ? OR d.name ILIKE ?)
-                        END)
-                    GROUP BY f.idFilm
-                    ORDER BY likes_count DESC
-                """;
-        return findMany(sql, by, "%" + query + "%", by, "%" + query + "%", by, "%" + query + "%",
+        return findMany(SEARCH_BY_TITTLE_OR_DIRECTOR, by, "%" + query + "%",
+                by, "%" + query + "%",
+                by, "%" + query + "%",
                 "%" + query + "%");
     }
 
