@@ -9,7 +9,6 @@ import java.sql.SQLException;
 
 @Component
 public class ReviewsRowMapper implements RowMapper<Review> {
-
     @Override
     public Review mapRow(ResultSet rs, int rowNum) throws SQLException {
         return Review.builder()
@@ -18,7 +17,7 @@ public class ReviewsRowMapper implements RowMapper<Review> {
                 .isPositive(rs.getBoolean("isPositive"))
                 .userId(rs.getLong("idUser"))
                 .filmId(rs.getLong("idFilm"))
-                .useful(rs.getInt("useful"))
+                .useful(rs.getInt("useful")) // всегда число, NULL не прилетит
                 .build();
     }
 }

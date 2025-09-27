@@ -60,7 +60,7 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public void addFriend(long idUser, long friendId) {
-        insert(ADD_FRIEND_QUERY, "idUser", idUser, friendId);
+        jdbc.update(ADD_FRIEND_QUERY, idUser, friendId);
     }
 
     public void deleteFriends(long idUser, long friendId) {

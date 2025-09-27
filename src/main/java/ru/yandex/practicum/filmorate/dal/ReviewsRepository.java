@@ -41,10 +41,10 @@ public class ReviewsRepository extends BaseRepository<Review> {
             LIMIT ?
             """;
     private static final String FIND_BY_ID_QUERY = """
-            SELECT r.id, r.content, r.isPositive, r.idUser, r.idFilm, COALESCE(SUM(CASE
-                                                                          WHEN rl.likeType = 'LIKE' THEN 1
-                                                                          WHEN rl.likeType = 'DISLIKE' THEN -1
-                                                                          ELSE 0 END), 0) AS useful
+            SELECT r.id, r.content, r.isPositive, r.idUser, r.idFilm, sum(CASE
+                                                                            WHEN rl.likeType = 'LIKE' THEN 1
+                                                                            WHEN rl.likeType = 'DISLIKE' THEN -1
+                                                                            ELSE 0 END) AS useful
             FROM Reviews AS r
             LEFT OUTER JOIN REVIEW_LIKES rl ON rl.idReview = r.id
             WHERE r.id = ?
@@ -65,7 +65,7 @@ public class ReviewsRepository extends BaseRepository<Review> {
     }
 
     public Review save(Review review) {
-        long id = insert(INSERT_QUERY, "ID",
+        long id = insert(INSERT_QUERY, "id",
                 review.getContent(),
                 review.getIsPositive(),
                 review.getUserId(),
@@ -75,7 +75,7 @@ public class ReviewsRepository extends BaseRepository<Review> {
         return review;
     }
 
-    public List<Review> findByFilmId(Long filmId, Integer count) {
+    public List<Review> findAll(Long filmId, Integer count) {
         return findMany(FIND_ALL_QUERY, filmId, count);
     }
 

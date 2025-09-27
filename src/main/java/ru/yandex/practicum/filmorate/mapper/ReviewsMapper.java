@@ -5,14 +5,32 @@ import ru.yandex.practicum.filmorate.dto.review.ReviewResponseDto;
 import ru.yandex.practicum.filmorate.model.Review;
 
 public class ReviewsMapper {
-    public static Review toReview(ReviewRequestDto dto) {
+
+    /**
+     * CREATE: игнорируем id и useful из DTO
+     */
+    public static Review toReviewForCreate(ReviewRequestDto dto) {
+        return Review.builder()
+                .id(null)
+                .content(dto.getContent())
+                .isPositive(dto.getIsPositive())
+                .userId(dto.getUserId())
+                .filmId(dto.getFilmId())
+                .useful(null)
+                .build();
+    }
+
+    /**
+     * UPDATE: id берём из DTO, useful всё равно не маппим
+     */
+    public static Review toReviewForUpdate(ReviewRequestDto dto) {
         return Review.builder()
                 .id(dto.getReviewId())
                 .content(dto.getContent())
                 .isPositive(dto.getIsPositive())
                 .userId(dto.getUserId())
                 .filmId(dto.getFilmId())
-                .useful(dto.getUseful())
+                .useful(null)
                 .build();
     }
 
@@ -27,11 +45,11 @@ public class ReviewsMapper {
                 .build();
     }
 
-    public static Review updateReviewFields(Review review, Review request) {
-        review.setIsPositive(request.getIsPositive());
+    public static Review updateReviewFields(Review current, Review request) {
+        current.setIsPositive(request.getIsPositive());
         if (request.getContent() != null) {
-            review.setContent(request.getContent());
+            current.setContent(request.getContent());
         }
-        return review;
+        return current;
     }
 }
