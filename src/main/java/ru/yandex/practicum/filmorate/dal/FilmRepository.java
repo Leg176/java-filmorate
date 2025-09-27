@@ -6,11 +6,9 @@ import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
-
 
     public FilmRepository(JdbcTemplate jdbc, RowMapper<Film> mapper) {
         super(jdbc, mapper);
@@ -42,6 +40,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String LIKES_QUERY = "SELECT idFilm, COUNT(*) as likesCount FROM Likes WHERE idFilm IN (";
     private static final String ADD_GENRE_QUERY = "MERGE INTO FilmGenres (idFilm, idGenre) KEY (idFilm, idGenre) VALUES (?, ?)";
     private static final String DELETE_GENRE_QUERY = "DELETE FROM FilmGenres WHERE idFilm = ? AND idGenre = ?";
+
     private static final String FIND_COMMON_FILMS = """
             SELECT сf.*
             FROM (SELECT f.*, mr.namempa
@@ -57,36 +56,47 @@ public class FilmRepository extends BaseRepository<Film> {
                             GROUP BY l.idFilm) сl ON сl.idFilm = сf.idFilm
             ORDER BY сl.cnt desc
             """;
+
     private static final String ADD_DIRECTOR_QUERY = "MERGE INTO FilmDirectors (idFilm, idDirector) KEY (idFilm, idDirector) VALUES (?, ?)";
     private static final String DELETE_DIRECTOR_QUERY = "DELETE FROM FilmDirectors WHERE idFilm = ? AND idDirector = ?";
-    private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON " +
-            "f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
-    private static final String GET_RECOMMENDATION = """
-            SELECT *
-            FROM (
-                SELECT *
-                FROM FILMS
-                WHERE idFilm IN (
-                    SELECT idFilm
-                    FROM LIKES
-                    WHERE idUser IN (
-                        SELECT idUser
-                        FROM LIKES
-                        WHERE idFilm IN (
-                            SELECT idFilm
-                            FROM LIKES
-                            WHERE idUser = ?
-                        )
-                        AND idUser <> ?
-                    )
-                )
-            ) t
-            WHERE idFilm NOT IN (
-                SELECT idFilm
-                FROM LIKES
-                WHERE idUser = ?
-            )
+
+    private static final String FIND_BY_DIRECTOR_QUERY = "SELECT f.* FROM Films f JOIN FilmDirectors fd ON f.idFilm = fd.idFilm WHERE fd.idDirector = ?";
+
+    /* ▼▼▼ NEW: сортировка на уровне SQL ▼▼▼ */
+    private static final String FIND_BY_DIRECTOR_ORDER_BY_YEAR = """
+            SELECT f.*
+            FROM Films f
+            JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
+            WHERE fd.idDirector = ?
+            ORDER BY f.releaseDate, f.idFilm
             """;
+
+    private static final String FIND_BY_DIRECTOR_ORDER_BY_LIKES = """
+            SELECT f.*
+            FROM Films f
+            JOIN FilmDirectors fd ON f.idFilm = fd.idFilm
+            LEFT JOIN Likes l ON l.idFilm = f.idFilm
+            WHERE fd.idDirector = ?
+            GROUP BY f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
+            ORDER BY COUNT(l.idUser) DESC, f.idFilm
+            """;
+    /* ▲▲▲ NEW ▲▲▲ */
+
+    /* ▼▼▼ NEW: рекомендации без глубоких вложенных IN ▼▼▼ */
+    private static final String GET_RECOMMENDATION = """
+            SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa,
+                   COUNT(*) AS score
+            FROM LIKES l_sim
+            JOIN LIKES l_cand ON l_cand.idUser = l_sim.idUser
+            JOIN FILMS f      ON f.idFilm     = l_cand.idFilm
+            WHERE l_sim.idFilm IN (SELECT idFilm FROM LIKES WHERE idUser = ?)
+              AND l_cand.idFilm NOT IN (SELECT idFilm FROM LIKES WHERE idUser = ?)
+              AND l_cand.idUser <> ?
+            GROUP BY f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
+            ORDER BY score DESC, f.idFilm
+            """;
+    /* ▲▲▲ NEW ▲▲▲ */
+
     private static final String FIND_MOST_POPULAR_TEMPLATE = """
               SELECT f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa
               FROM Films f
@@ -111,44 +121,30 @@ public class FilmRepository extends BaseRepository<Film> {
             """;
 
     public List<Film> findFilmsByDirector(Long directorId, String sortBy) {
-
-        List<Film> films = findMany(FIND_BY_DIRECTOR_QUERY, directorId);
-        countLikesForFilms(films);
-
-        return films.stream()
-                .sorted((f1, f2) -> {
-                    if ("year".equalsIgnoreCase(sortBy)) {
-                        return f1.getReleaseDate().compareTo(f2.getReleaseDate());
-                    } else if ("likes".equalsIgnoreCase(sortBy)) {
-                        return Long.compare(f2.getLikes(), f1.getLikes()); // DESC
-                    } else {
-                        return f1.getReleaseDate().compareTo(f2.getReleaseDate()); // по умолчанию
-                    }
-                })
-                .collect(Collectors.toList());
+        if ("likes".equalsIgnoreCase(sortBy)) {
+            // сортировка по количеству лайков в SQL
+            return findMany(FIND_BY_DIRECTOR_ORDER_BY_LIKES, directorId);
+        }
+        // по умолчанию сортируем по году релиза в SQL
+        return findMany(FIND_BY_DIRECTOR_ORDER_BY_YEAR, directorId);
     }
 
     public void countLikesForFilms(List<Film> films) {
         if (films.isEmpty()) return;
-        // Собираем все id фильмов
         List<Long> filmIds = films.stream()
                 .map(Film::getIdFilm)
                 .toList();
-        // Получаем все лайки для этих фильмов
         String placeholders = String.join(",", Collections.nCopies(filmIds.size(), "?"));
         String query = LIKES_QUERY + placeholders + ") GROUP BY idFilm";
-        // Получаем все лайки
         List<Object[]> likesData = jdbc.query(query, filmIds.toArray(new Long[0]),
                 (rs, rowNum) -> new Object[]{
                         rs.getLong("idFilm"),
                         rs.getLong("likesCount")
                 });
-        // Создаем мапу лайков
         Map<Long, Long> likesMap = new HashMap<>();
         for (Object[] row : likesData) {
             likesMap.put((Long) row[0], (Long) row[1]);
         }
-        // Заполняем лайки в объектах Film
         for (Film film : films) {
             film.setLikes(likesMap.getOrDefault(film.getIdFilm(), 0L));
         }
@@ -251,7 +247,7 @@ public class FilmRepository extends BaseRepository<Film> {
             sql.append("WHERE ").append(String.join(" AND ", cond)).append(' ');
         }
 
-        sql.append("GROUP BY f.idFilm ")
+        sql.append("GROUP BY f.idFilm, f.nameFilm, f.description, f.releaseDate, f.duration, f.idMpa ")
                 .append("ORDER BY COUNT(l.idUser) DESC ")
                 .append("LIMIT ?");
 
