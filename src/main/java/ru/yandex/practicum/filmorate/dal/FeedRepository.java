@@ -10,8 +10,8 @@ import java.util.List;
 @Repository
 public class FeedRepository extends BaseRepository<Event> {
     private static final String INSERT_QUERY =
-            "INSERT INTO events(idEntity, eventType, operation, idUser,  timeCreated) VALUES (?, ?, ?, ?, ?)";
-    private static final String READ_EVENT_FEED_FOR_USER_QUERY = "SELECT * FROM events WHERE idUser = ?";
+            "INSERT INTO events(entity_id, event_type, operation, user_id,  time_created) VALUES (?, ?, ?, ?, ?)";
+    private static final String READ_EVENT_FEED_FOR_USER_QUERY = "SELECT * FROM events WHERE user_id = ?";
 
     public FeedRepository(JdbcTemplate jdbc, RowMapper<Event> mapper) {
         super(jdbc, mapper);

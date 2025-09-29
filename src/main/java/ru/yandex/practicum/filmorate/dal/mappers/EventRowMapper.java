@@ -16,11 +16,11 @@ public class EventRowMapper implements RowMapper<Event> {
     public Event mapRow(ResultSet rs, int rowNum) throws SQLException {
         return Event.builder()
                 .id(rs.getLong("id"))
-                .idEntity(rs.getLong("idEntity"))
-                .idUser(rs.getLong("idUser"))
-                .eventType(EventType.valueOf(rs.getString("eventType")))
+                .idEntity(rs.getLong("entity_id"))
+                .idUser(rs.getLong("user_id"))
+                .eventType(EventType.valueOf(rs.getString("event_type")))
                 .operation(Operation.valueOf(rs.getString("operation")))
-                .timeCreated(rs.getTimestamp("timeCreated"))
+                .timeCreated(rs.getTimestamp("time_created"))
                 .build();
     }
 }
