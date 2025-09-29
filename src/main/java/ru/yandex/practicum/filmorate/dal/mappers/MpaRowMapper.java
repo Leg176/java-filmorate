@@ -12,8 +12,8 @@ public class MpaRowMapper implements RowMapper<MotionPictureAssociation> {
     @Override
     public MotionPictureAssociation mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         MotionPictureAssociation mpa = new MotionPictureAssociation();
-        mpa.setId(resultSet.getLong("idMpa"));
-        mpa.setName(resultSet.getString("nameMpa"));
+        mpa.setId(resultSet.getLong("id"));
+        mpa.setName(resultSet.getString("name_mpa"));
         return mpa;
     }
 }

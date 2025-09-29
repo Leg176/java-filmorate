@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -18,20 +19,21 @@ public class UserRepository extends BaseRepository<User> {
     @Autowired
     private EntityManager entityManager;
 
-    private static final String FIND_ALL_FRIENDS_QUERY = "SELECT idUserFriends FROM Friends WHERE idUser = ?";
-    private static final String FIND_ALL_QUERY = "SELECT * FROM Users";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM Users WHERE idUser = ?";
-    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM Users WHERE email = ?";
-    private static final String INSERT_QUERY = "INSERT INTO Users(email, login, name, birthday)" +
+    private static final String FIND_ALL_FRIENDS_QUERY = "SELECT user_friends_id FROM friends WHERE user_id = ?";
+    private static final String FIND_ALL_QUERY = "SELECT * FROM users";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
+    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM users WHERE email = ?";
+    private static final String INSERT_QUERY = "INSERT INTO users(email, login, name, birthday)" +
             "VALUES (?, ?, ?, ?)";
-    private static final String ADD_FRIEND_QUERY = "INSERT INTO Friends(idUser, idUserFriends) VALUES (?, ?)";
-    private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.idUserFriends FROM Friends f1 WHERE f1.idUser = ? " +
-                    "AND f1.idUserFriends IN ( SELECT f2.idUserFriends FROM Friends f2 WHERE f2.idUser = ?)";
-    private static final String DELETE_FRIEND_QUERY = "DELETE FROM Friends WHERE idUser = ? AND idUserFriends = ?";
-    private static final String UPDATE_QUERY = "UPDATE Users SET email = ?, login = ?, name = ?, birthday = ?" +
-            " WHERE idUser = ?";
-    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM Friends f WHERE f.idUser = :idUser " +
-            "AND f.idUserFriends = :idUserFriends";
+    private static final String ADD_FRIEND_QUERY = "INSERT INTO friends(user_id, user_friends_id) VALUES (?, ?)";
+    private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.user_friends_id FROM friends f1 WHERE f1.user_id = ? " +
+                    "AND f1.user_friends_id IN ( SELECT f2.user_friends_id FROM friends f2 WHERE f2.user_id = ?)";
+    private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE user_id = ? AND user_friends_id = ?";
+    private static final String DELETE_USER_QUERY = "DELETE FROM users WHERE id = ?";
+    private static final String UPDATE_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
+            " WHERE id = ?";
+    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM friends f WHERE f.user_id = :idUser " +
+            "AND f.user_friends_id = :idUserFriends";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -53,16 +55,20 @@ public class UserRepository extends BaseRepository<User> {
         return findOne(FIND_BY_EMAIL_QUERY, email);
     }
 
-    public List<Long> findAllFriends(long idUser) {
-        return jdbc.queryForList(FIND_ALL_FRIENDS_QUERY, Long.class, idUser);
+    public List<Long> findAllFriends(long id) {
+        return jdbc.queryForList(FIND_ALL_FRIENDS_QUERY, Long.class, id);
     }
 
     public void addFriend(long idUser, long friendId) {
-        insert(ADD_FRIEND_QUERY, "idUser", idUser, friendId);
+        insert(ADD_FRIEND_QUERY, "user_id", idUser, friendId);
     }
 
     public void deleteFriends(long idUser, long friendId) {
         jdbc.update(DELETE_FRIEND_QUERY, idUser, friendId);
+    }
+
+    public void deleteUser(long id) {
+        jdbc.update(DELETE_USER_QUERY, id);
     }
 
     public List<User> findJointFriendsUsers(Long idUser, Long otherId) {
@@ -73,18 +79,18 @@ public class UserRepository extends BaseRepository<User> {
                 .collect(Collectors.toList());
     }
 
-    public Optional<User> getUser(long idUser) {
-        return findOne(FIND_BY_ID_QUERY, idUser);
+    public Optional<User> getUser(long id) {
+        return findOne(FIND_BY_ID_QUERY, id);
     }
 
     public User save(User user) {
-            long id = insert(INSERT_QUERY, "idUser",
+            long id = insert(INSERT_QUERY, "id",
                     user.getEmail(),
                     user.getLogin(),
                     user.getName(),
                     user.getBirthday()
             );
-            user.setIdUser(id);
+            user.setId(id);
             return user;
     }
 
@@ -94,7 +100,7 @@ public class UserRepository extends BaseRepository<User> {
                 user.getLogin(),
                 user.getName(),
                 user.getBirthday(),
-                user.getIdUser()
+                user.getId()
         );
         return user;
     }

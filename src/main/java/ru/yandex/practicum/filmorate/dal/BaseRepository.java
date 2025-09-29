@@ -1,22 +1,25 @@
 package ru.yandex.practicum.filmorate.dal;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import ru.yandex.practicum.filmorate.exception.InternalServerException;
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
 
 import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@RequiredArgsConstructor
-public class BaseRepository<T> {
+public abstract class BaseRepository<T> {
+
     protected final JdbcTemplate jdbc;
     protected final RowMapper<T> mapper;
+
+    protected BaseRepository(JdbcTemplate jdbc, RowMapper<T> mapper) {
+        this.jdbc = jdbc;
+        this.mapper = mapper;
+    }
 
     protected Optional<T> findOne(String query, Object... params) {
         try {
@@ -36,6 +39,11 @@ public class BaseRepository<T> {
         return rowsDeleted > 0;
     }
 
+    protected boolean delete(String query, Object... params) {
+        int rowsDeleted = jdbc.update(query, params);
+        return rowsDeleted > 0;
+    }
+
     protected void update(String query, Object... params) {
         int rowsUpdated = jdbc.update(query, params);
         if (rowsUpdated == 0) {
@@ -43,21 +51,20 @@ public class BaseRepository<T> {
         }
     }
 
-    protected long insert(String query, String nameColumn, Object... params) {
+    protected long insert(String query, String keyColumn, Object... params) {
         GeneratedKeyHolder keyHolder = new GeneratedKeyHolder();
-        jdbc.update(connection -> {
-            // Явно указываем имя столбца с автоинкрементным ID
-            PreparedStatement ps = connection.prepareStatement(query, new String[]{nameColumn});
-            for (int idx = 0; idx < params.length; idx++) {
-                ps.setObject(idx + 1, params[idx]);
+        jdbc.update(conn -> {
+            PreparedStatement ps = conn.prepareStatement(query, new String[]{keyColumn});
+            for (int i = 0; i < params.length; i++) {
+                ps.setObject(i + 1, params[i]);
             }
             return ps;
         }, keyHolder);
+
         Map<String, Object> keys = keyHolder.getKeys();
-        if (keys != null && keys.containsKey(nameColumn)) {
-            return ((Number) keys.get(nameColumn)).longValue();
-        } else {
-            throw new NotFoundException("Не удалось сохранить данные");
+        if (keys != null && keys.containsKey(keyColumn)) {
+            return ((Number) keys.get(keyColumn)).longValue();
         }
+        throw new InternalServerException("Не удалось сохранить данные");
     }
 }

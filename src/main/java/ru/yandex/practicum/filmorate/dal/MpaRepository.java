@@ -18,10 +18,10 @@ import java.util.stream.Collectors;
 @Repository
 public class MpaRepository extends BaseRepository<MotionPictureAssociation> {
 
-    private static final String FIND_ALL_QUERY = "SELECT * FROM Mpa_rating";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM Mpa_rating WHERE idMpa = ?";
-    private static final String FIND_ALL_MPA_FOR_ALL_FILMS = "SELECT f.idFilm AS filmId, m.idMpa, m.nameMpa " +
-        "FROM Films f INNER JOIN Mpa_rating m ON f.idMpa = m.idMpa WHERE f.idFilm IN (%s) ORDER BY f.idFilm";
+    private static final String FIND_ALL_QUERY = "SELECT * FROM mpa_rating";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM mpa_rating WHERE id = ?";
+    private static final String FIND_ALL_MPA_FOR_ALL_FILMS = "SELECT f.id AS filmId, m.id, m.name_mpa " +
+        "FROM films f INNER JOIN mpa_rating m ON f.mpa_id = m.id WHERE f.id IN (%s) ORDER BY f.id";
 
     public MpaRepository(JdbcTemplate jdbc, RowMapper<MotionPictureAssociation> mapper) {
         super(jdbc, mapper);
@@ -44,7 +44,6 @@ public class MpaRepository extends BaseRepository<MotionPictureAssociation> {
         String placeholders = StringUtils.arrayToCommaDelimitedString(
                 new String[filmIds.size()]).replace("null", "?");
         String sql = String.format(FIND_ALL_MPA_FOR_ALL_FILMS, placeholders);
-
 
         List<Object[]> results = jdbc.query(
                 sql,

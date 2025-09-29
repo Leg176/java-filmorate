@@ -12,14 +12,14 @@ import java.util.stream.IntStream;
 @Repository
 public class GenreRepository extends BaseRepository<Genre> {
 
-    private static final String FIND_ALL_QUERY = "SELECT * FROM Genres";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM Genres WHERE idGenre = ?";
-    private static final String FIND_GENRES_BY_ID_FILM_QUERY = "SELECT g.* FROM Genres g " +
-            "INNER JOIN FilmGenres fg ON g.idGenre = fg.idGenre WHERE fg.idFilm = ?";
-    private static final String FIND_BY_IDS_QUERY = "SELECT * FROM Genres WHERE idGenre IN (?)";
-    private static final String FIND_ALL_GENRES_FOR_ALL_FILMS = "SELECT DISTINCT fg.idFilm, g.idGenre, g.name FROM FilmGenres fg " +
-            "INNER JOIN Genres g ON fg.idGenre = g.idGenre WHERE fg.idFilm IN (%s) ORDER BY fg.idFilm";
-
+    private static final String FIND_ALL_QUERY = "SELECT * FROM genres";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM genres WHERE id = ?";
+    private static final String FIND_GENRES_BY_ID_FILM_QUERY = "SELECT g.* FROM genres g " +
+            "INNER JOIN film_genres fg ON g.id = fg.genre_id WHERE fg.film_id = ?";
+    private static final String FIND_BY_IDS_QUERY = "SELECT * FROM genres WHERE id IN (?)";
+    private static final String FIND_ALL_GENRES_FOR_ALL_FILMS = "SELECT DISTINCT fg.film_id, g.id, " +
+            "g.name FROM film_genres fg INNER JOIN genres g ON fg.genre_id = g.id WHERE fg.film_id " +
+            "IN (%s) ORDER BY fg.film_id";
 
     public GenreRepository(JdbcTemplate jdbc, RowMapper<Genre> mapper) {
         super(jdbc, mapper);
@@ -71,7 +71,7 @@ public class GenreRepository extends BaseRepository<Genre> {
                         sql,
                         filmIds.toArray(),
                         (rs, rowNum) -> new Object[]{
-                                rs.getLong("idFilm"),
+                                rs.getLong("film_id"),
                                 mapper.mapRow(rs, rowNum)
                         }
                 ).stream()
