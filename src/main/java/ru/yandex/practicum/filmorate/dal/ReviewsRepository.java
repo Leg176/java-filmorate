@@ -18,11 +18,11 @@ public class ReviewsRepository extends BaseRepository<Review> {
     private static final String FIND_ALL_QUERY = """
             SELECT r.id, r.content, r.isPositive, r.user_id, r.film_id,
                    COALESCE(SUM(CASE
-                       WHEN rl.likeType = 'LIKE' THEN 1
-                       WHEN rl.likeType = 'DISLIKE' THEN -1
+                       WHEN rl.like_type = 'LIKE' THEN 1
+                       WHEN rl.like_type = 'DISLIKE' THEN -1
                        ELSE 0 END), 0) AS useful
             FROM reviews AS r
-            LEFT OUTER JOIN review_likes rl ON rl.idReview = r.id
+            LEFT OUTER JOIN review_likes rl ON rl.review_id = r.id
             WHERE r.film_id = ?
             GROUP BY r.id
             ORDER BY useful DESC, r.id ASC
@@ -31,35 +31,35 @@ public class ReviewsRepository extends BaseRepository<Review> {
     private static final String FIND_ALL_QUERY_WITH_COUNT = """
             SELECT r.id, r.content, r.isPositive, r.user_id, r.film_id,
                    COALESCE(SUM(CASE
-                       WHEN rl.likeType = 'LIKE' THEN 1
-                       WHEN rl.likeType = 'DISLIKE' THEN -1
+                       WHEN rl.like_type = 'LIKE' THEN 1
+                       WHEN rl.like_type = 'DISLIKE' THEN -1
                        ELSE 0 END), 0) AS useful
             FROM reviews AS r
-            LEFT OUTER JOIN review_likes rl ON rl.idReview = r.id
+            LEFT OUTER JOIN review_likes rl ON rl.review_id = r.id
             GROUP BY r.id
             ORDER BY useful DESC, r.id ASC
             LIMIT ?
             """;
     private static final String FIND_BY_ID_QUERY = """
             SELECT r.id, r.content, r.isPositive, r.user_id, r.film_id, COALESCE(SUM(CASE
-                                                                          WHEN rl.likeType = 'LIKE' THEN 1
-                                                                          WHEN rl.likeType = 'DISLIKE' THEN -1
+                                                                          WHEN rl.like_type = 'LIKE' THEN 1
+                                                                          WHEN rl.like_type = 'DISLIKE' THEN -1
                                                                           ELSE 0 END), 0) AS useful
             FROM reviews AS r
-            LEFT OUTER JOIN review_likes rl ON rl.idReview = r.id
+            LEFT OUTER JOIN review_likes rl ON rl.review_id = r.id
             WHERE r.id = ?
             GROUP BY r.ID
             """;
     private static final String INSERT_QUERY = "INSERT INTO reviews(content, isPositive, user_id, film_id) " +
             "VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE reviews SET content = ?, isPositive = ? WHERE id = ?";
-    private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO review_likes (idReview, idUser, likeType) " +
-            "KEY (idReview, idUser) VALUES(?, ?, ?)";
+    private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO review_likes (review_id, user_id, like_type) " +
+            "KEY (review_id, user_id) VALUES(?, ?, ?)";
 
     private static final String REMOVE_REVIEW_QUERY = "DELETE FROM reviews " +
             "WHERE id = ?";
     private static final String REMOVE_LIKE_FROM_REVIEW_QUERY = "DELETE FROM review_likes " +
-            "WHERE idReview = ? AND idUser = ? AND likeType = ?";
+            "WHERE review_id = ? AND user_id = ? AND like_type = ?";
 
     public ReviewsRepository(JdbcTemplate jdbc, ReviewsRowMapper mapper) {
         super(jdbc, mapper);

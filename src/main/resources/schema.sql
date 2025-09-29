@@ -87,12 +87,12 @@ CREATE TABLE IF NOT EXISTS reviews (
 );
 
 CREATE TABLE IF NOT EXISTS review_likes (
-    idReview BIGINT,
-    idUser BIGINT,
-    likeType VARCHAR NOT NULL,
-    PRIMARY KEY (idReview, idUser),
-    FOREIGN KEY (idReview) REFERENCES reviews(id) ON DELETE CASCADE,
-    FOREIGN KEY (idUser) REFERENCES users(id) ON DELETE CASCADE
+    review_id BIGINT,
+    user_id BIGINT,
+    like_type VARCHAR NOT NULL,
+    PRIMARY KEY (review_id, user_id),
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS events (
