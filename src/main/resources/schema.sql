@@ -60,11 +60,11 @@ CREATE TABLE IF NOT EXISTS users (
      );
 
 CREATE TABLE IF NOT EXISTS likes (
-     idFilm BIGINT,
-     idUser BIGINT,
-     PRIMARY KEY (idFilm, idUser),
-     FOREIGN KEY (idFilm) REFERENCES films(id) ON DELETE CASCADE,
-     FOREIGN KEY (idUser) REFERENCES users(id) ON DELETE CASCADE
+     film_id BIGINT,
+     user_id BIGINT,
+     PRIMARY KEY (film_id, user_id),
+     FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
      );
 
  CREATE TABLE IF NOT EXISTS friends (

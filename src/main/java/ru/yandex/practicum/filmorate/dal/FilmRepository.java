@@ -26,14 +26,14 @@ public class FilmRepository extends BaseRepository<Film> {
                     "mr.name_mpa AS mpa_name " +
                     "FROM films f " +
                     "LEFT JOIN mpa_rating mr ON f.mpa_id = mr.id " +
-                    "LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM likes GROUP BY idFilm " +
-                    "ORDER BY COUNT(idUser) DESC) q ON q.idFilm = f.id " +
+                    "LEFT JOIN (SELECT film_id, COUNT(user_id) AS counter FROM likes GROUP BY film_id " +
+                    "ORDER BY COUNT(user_id) DESC) q ON q.film_id = f.id " +
                     "ORDER BY q.counter DESC LIMIT ?";
-    private static final String FIND_LIKES_QUERY = "SELECT l.idUser FROM likes l WHERE idFilm = ?";
-    private static final String ADD_LIKE_QUERY = "MERGE INTO likes (idFilm, idUser) KEY (idFilm, idUser) VALUES (?, ?)";
-    private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE idFilm = ? AND idUser = ?";
+    private static final String FIND_LIKES_QUERY = "SELECT l.user_id FROM likes l WHERE film_id = ?";
+    private static final String ADD_LIKE_QUERY = "MERGE INTO likes (film_id, user_id) KEY (film_id, user_id) VALUES (?, ?)";
+    private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private static final String DELETE_FILM_QUERY = "DELETE FROM films WHERE id = ?";
-    private static final String LIKES_QUERY = "SELECT idFilm, COUNT(*) as likesCount FROM likes WHERE idFilm IN (";
+    private static final String LIKES_QUERY = "SELECT film_id, COUNT(*) as likesCount FROM likes WHERE film_id IN (";
     private static final String ADD_GENRE_QUERY = "MERGE INTO film_genres (idFilm, idGenre) KEY (idFilm, idGenre) " +
             "VALUES (?, ?)";
     private static final String DELETE_GENRE_QUERY = "DELETE FROM film_genres WHERE idFilm = ? AND idGenre = ?";
@@ -41,15 +41,15 @@ public class FilmRepository extends BaseRepository<Film> {
             SELECT сf.*
             FROM (SELECT f.*, mr.name_mpa
             	FROM likes l1
-            	INNER JOIN films f ON f.id = l1.idFilm
+            	INNER JOIN films f ON f.id = l1.film_id
             	LEFT JOIN mpa_rating mr ON f.mpa_id = mr.id
-            	INNER JOIN likes l2 ON l2.idFilm = l1.idFilm
-                            AND l2.idUser = ?
-                            WHERE l1.idUser = ?) сf
+            	INNER JOIN likes l2 ON l2.film_id = l1.film_id
+                            AND l2.user_id = ?
+                            WHERE l1.user_id = ?) сf
             	INNER JOIN (
-            		SELECT l.idFilm, count(l.idUser) AS cnt
+            		SELECT l.film_id, count(l.user_id) AS cnt
                             FROM likes l
-                            GROUP BY l.idFilm) сl ON сl.idFilm = сf.id
+                            GROUP BY l.film_id) сl ON сl.film_id = сf.id
             ORDER BY сl.cnt desc
             """;
     private static final String ADD_DIRECTOR_QUERY = "MERGE INTO film_directors (idFilm, idDirector) " +
@@ -68,33 +68,33 @@ public class FilmRepository extends BaseRepository<Film> {
             SELECT f.*
             FROM films f
             JOIN film_directors fd ON f.id = fd.idFilm
-            LEFT JOIN likes l ON l.idFilm = f.id
+            LEFT JOIN likes l ON l.film_id = f.id
             WHERE fd.idDirector = ?
             GROUP BY f.id, f.name_film, f.description, f.release_date, f.duration, f.mpa_id
-            ORDER BY COUNT(l.idUser) DESC, f.id
+            ORDER BY COUNT(l.user_id) DESC, f.id
             """;
     private static final String GET_RECOMMENDATION = """
             SELECT f.id, f.name_film, f.description, f.release_date, f.duration, f.mpa_id,
                    COUNT(*) AS score
             FROM likes l_sim
-            JOIN likes l_cand ON l_cand.idUser = l_sim.idUser
-            JOIN films f ON f.id = l_cand.idFilm
-            WHERE l_sim.idFilm IN (SELECT idFilm FROM likes WHERE idUser = ?)
-              AND l_cand.idFilm NOT IN (SELECT idFilm FROM likes WHERE idUser = ?)
-              AND l_cand.idUser <> ?
+            JOIN likes l_cand ON l_cand.user_id = l_sim.user_id
+            JOIN films f ON f.id = l_cand.film_id
+            WHERE l_sim.film_id IN (SELECT film_id FROM likes WHERE user_id = ?)
+              AND l_cand.film_id NOT IN (SELECT film_id FROM likes WHERE user_id = ?)
+              AND l_cand.user_id <> ?
             GROUP BY f.id, f.name_film, f.description, f.release_date, f.duration, f.mpa_id
             ORDER BY score DESC, f.id
             """;
     private static final String FIND_MOST_POPULAR_TEMPLATE = """
               SELECT f.id, f.name_film, f.description, f.release_date, f.duration, f.mpa_id
               FROM films f
-              LEFT JOIN likes l ON l.idFilm = f.id
+              LEFT JOIN likes l ON l.film_id = f.id
               LEFT JOIN film_genres fg ON fg.idFilm = f.id
             """;
     private static final String SEARCH_BY_TITTLE_OR_DIRECTOR = """
-                SELECT f.*, COUNT(l.idFilm) as likes_count
+                SELECT f.*, COUNT(l.film_id) as likes_count
                 FROM films f
-                LEFT JOIN likes l ON f.id = l.idFilm
+                LEFT JOIN likes l ON f.id = l.film_id
                 LEFT JOIN film_directors fd ON f.id = fd.idFilm
                 LEFT JOIN directors d ON fd.idDirector = d.id
                 WHERE
@@ -122,10 +122,10 @@ public class FilmRepository extends BaseRepository<Film> {
                 .map(Film::getIdFilm)
                 .toList();
         String placeholders = String.join(",", Collections.nCopies(filmIds.size(), "?"));
-        String query = LIKES_QUERY + placeholders + ") GROUP BY idFilm";
+        String query = LIKES_QUERY + placeholders + ") GROUP BY film_id";
         List<Object[]> likesData = jdbc.query(query, filmIds.toArray(new Long[0]),
                 (rs, rowNum) -> new Object[]{
-                        rs.getLong("idFilm"),
+                        rs.getLong("film_id"),
                         rs.getLong("likesCount")
                 });
         Map<Long, Long> likesMap = new HashMap<>();
@@ -235,7 +235,7 @@ public class FilmRepository extends BaseRepository<Film> {
         }
 
         sql.append("GROUP BY f.id, f.name_film, f.description, f.release_date, f.duration, f.mpa_id ")
-                .append("ORDER BY COUNT(l.idUser) DESC ")
+                .append("ORDER BY COUNT(l.user_id) DESC ")
                 .append("LIMIT ?");
 
         params.add(limit);
