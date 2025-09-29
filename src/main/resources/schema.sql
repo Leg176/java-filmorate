@@ -44,11 +44,11 @@ CREATE TABLE IF NOT EXISTS genres (
      );
 
 CREATE TABLE IF NOT EXISTS film_genres (
-     idFilm BIGINT,
-     idGenre BIGINT,
-     PRIMARY KEY (idFilm, idGenre),
-     FOREIGN KEY (idFilm) REFERENCES films(id) ON DELETE CASCADE,
-     FOREIGN Key (idGenre) REFERENCES genres(id) ON DELETE CASCADE
+     film_id BIGINT,
+     genre_id BIGINT,
+     PRIMARY KEY (film_id, genre_id),
+     FOREIGN KEY (film_id) REFERENCES films(id) ON DELETE CASCADE,
+     FOREIGN Key (genre_id) REFERENCES genres(id) ON DELETE CASCADE
      );
 
 CREATE TABLE IF NOT EXISTS users (

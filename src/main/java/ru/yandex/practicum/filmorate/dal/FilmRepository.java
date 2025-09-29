@@ -34,9 +34,9 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
     private static final String DELETE_FILM_QUERY = "DELETE FROM films WHERE id = ?";
     private static final String LIKES_QUERY = "SELECT film_id, COUNT(*) as likesCount FROM likes WHERE film_id IN (";
-    private static final String ADD_GENRE_QUERY = "MERGE INTO film_genres (idFilm, idGenre) KEY (idFilm, idGenre) " +
+    private static final String ADD_GENRE_QUERY = "MERGE INTO film_genres (film_id, genre_id) KEY (film_id, genre_id) " +
             "VALUES (?, ?)";
-    private static final String DELETE_GENRE_QUERY = "DELETE FROM film_genres WHERE idFilm = ? AND idGenre = ?";
+    private static final String DELETE_GENRE_QUERY = "DELETE FROM film_genres WHERE film_id = ? AND genre_id = ?";
     private static final String FIND_COMMON_FILMS = """
             SELECT сf.*
             FROM (SELECT f.*, mr.name_mpa
@@ -89,7 +89,7 @@ public class FilmRepository extends BaseRepository<Film> {
               SELECT f.id, f.name_film, f.description, f.release_date, f.duration, f.mpa_id
               FROM films f
               LEFT JOIN likes l ON l.film_id = f.id
-              LEFT JOIN film_genres fg ON fg.idFilm = f.id
+              LEFT JOIN film_genres fg ON fg.film_id = f.id
             """;
     private static final String SEARCH_BY_TITTLE_OR_DIRECTOR = """
                 SELECT f.*, COUNT(l.film_id) as likes_count
@@ -221,7 +221,7 @@ public class FilmRepository extends BaseRepository<Film> {
         List<Object> params = new ArrayList<>();
 
         if (genreId != null) {
-            cond.add("fg.idGenre = ?");
+            cond.add("fg.genre_id = ?");
             params.add(genreId);
         }
         if (year != null) {
