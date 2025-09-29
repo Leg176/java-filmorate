@@ -32,7 +32,7 @@ public class ReviewController {
 
     @PutMapping
     public ResponseEntity<ReviewResponseDto> updateReview(@RequestBody ReviewRequestDto dto) {
-        if (dto.getContent() == null || dto.getContent().trim().isEmpty()) {
+        if (dto.getContent() == null || dto.getContent().isBlank()) {
             throw new IllegalArgumentException("Контент отзыва не может быть пустым");
         }
 

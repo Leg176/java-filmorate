@@ -22,12 +22,12 @@ CREATE TABLE IF NOT EXISTS directors (
 
 CREATE TABLE IF NOT EXISTS films (
      id BIGINT PRIMARY KEY AUTO_INCREMENT,
-     nameFilm VARCHAR(100) NOT NULL,
+     name_film VARCHAR(100) NOT NULL,
      description VARCHAR(2000) NOT NULL,
-     releaseDate DATE NOT NULL,
+     release_date DATE NOT NULL,
      duration INT NOT NULL CHECK (duration > 0),
-     idMpa BIGINT NOT NULL,
-     FOREIGN KEY (idMpa) REFERENCES mpa_rating(id)
+     mpa_id BIGINT NOT NULL,
+     FOREIGN KEY (mpa_id) REFERENCES mpa_rating(id)
      );
 
 CREATE TABLE IF NOT EXISTS film_directors (
