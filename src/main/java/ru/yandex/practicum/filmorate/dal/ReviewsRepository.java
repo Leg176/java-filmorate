@@ -16,20 +16,20 @@ import java.util.Optional;
 @Repository
 public class ReviewsRepository extends BaseRepository<Review> {
     private static final String FIND_ALL_QUERY = """
-            SELECT r.id, r.content, r.isPositive, r.idUser, r.idFilm,
+            SELECT r.id, r.content, r.isPositive, r.user_id, r.film_id,
                    COALESCE(SUM(CASE
                        WHEN rl.likeType = 'LIKE' THEN 1
                        WHEN rl.likeType = 'DISLIKE' THEN -1
                        ELSE 0 END), 0) AS useful
             FROM reviews AS r
             LEFT OUTER JOIN review_likes rl ON rl.idReview = r.id
-            WHERE r.idFilm = ?
+            WHERE r.film_id = ?
             GROUP BY r.id
             ORDER BY useful DESC, r.id ASC
             LIMIT ?
             """;
     private static final String FIND_ALL_QUERY_WITH_COUNT = """
-            SELECT r.id, r.content, r.isPositive, r.idUser, r.idFilm,
+            SELECT r.id, r.content, r.isPositive, r.user_id, r.film_id,
                    COALESCE(SUM(CASE
                        WHEN rl.likeType = 'LIKE' THEN 1
                        WHEN rl.likeType = 'DISLIKE' THEN -1
@@ -41,7 +41,7 @@ public class ReviewsRepository extends BaseRepository<Review> {
             LIMIT ?
             """;
     private static final String FIND_BY_ID_QUERY = """
-            SELECT r.id, r.content, r.isPositive, r.idUser, r.idFilm, COALESCE(SUM(CASE
+            SELECT r.id, r.content, r.isPositive, r.user_id, r.film_id, COALESCE(SUM(CASE
                                                                           WHEN rl.likeType = 'LIKE' THEN 1
                                                                           WHEN rl.likeType = 'DISLIKE' THEN -1
                                                                           ELSE 0 END), 0) AS useful
@@ -50,7 +50,7 @@ public class ReviewsRepository extends BaseRepository<Review> {
             WHERE r.id = ?
             GROUP BY r.ID
             """;
-    private static final String INSERT_QUERY = "INSERT INTO reviews(content, isPositive, idUser, idFilm) " +
+    private static final String INSERT_QUERY = "INSERT INTO reviews(content, isPositive, user_id, film_id) " +
             "VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE reviews SET content = ?, isPositive = ? WHERE id = ?";
     private static final String INSERT_LIKE_DISLIKE_QUERY = "MERGE INTO review_likes (idReview, idUser, likeType) " +
