@@ -68,11 +68,11 @@ CREATE TABLE IF NOT EXISTS likes (
      );
 
  CREATE TABLE IF NOT EXISTS friends (
-      idUser BIGINT,
-      idUserFriends BIGINT,
-      PRIMARY KEY (idUser, idUserFriends),
-      FOREIGN KEY (idUser) REFERENCES users(id) ON DELETE CASCADE,
-      FOREIGN KEY (idUserFriends) REFERENCES users(id) ON DELETE CASCADE
+      user_id BIGINT,
+      user_friends_id BIGINT,
+      PRIMARY KEY (user_id, user_friends_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_friends_id) REFERENCES users(id) ON DELETE CASCADE
       );
 
 CREATE TABLE IF NOT EXISTS reviews (

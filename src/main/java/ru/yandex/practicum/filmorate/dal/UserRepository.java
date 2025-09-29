@@ -19,21 +19,21 @@ public class UserRepository extends BaseRepository<User> {
     @Autowired
     private EntityManager entityManager;
 
-    private static final String FIND_ALL_FRIENDS_QUERY = "SELECT idUserFriends FROM friends WHERE idUser = ?";
+    private static final String FIND_ALL_FRIENDS_QUERY = "SELECT user_friends_id FROM friends WHERE user_id = ?";
     private static final String FIND_ALL_QUERY = "SELECT * FROM users";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
     private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM users WHERE email = ?";
     private static final String INSERT_QUERY = "INSERT INTO users(email, login, name, birthday)" +
             "VALUES (?, ?, ?, ?)";
-    private static final String ADD_FRIEND_QUERY = "INSERT INTO friends(idUser, idUserFriends) VALUES (?, ?)";
-    private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.idUserFriends FROM friends f1 WHERE f1.idUser = ? " +
-                    "AND f1.idUserFriends IN ( SELECT f2.idUserFriends FROM friends f2 WHERE f2.idUser = ?)";
-    private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE idUser = ? AND idUserFriends = ?";
+    private static final String ADD_FRIEND_QUERY = "INSERT INTO friends(user_id, user_friends_id) VALUES (?, ?)";
+    private static final String FIND_JOIN_FRIENDS_QUERY = "SELECT f1.user_friends_id FROM friends f1 WHERE f1.user_id = ? " +
+                    "AND f1.user_friends_id IN ( SELECT f2.user_friends_id FROM friends f2 WHERE f2.user_id = ?)";
+    private static final String DELETE_FRIEND_QUERY = "DELETE FROM friends WHERE user_id = ? AND user_friends_id = ?";
     private static final String DELETE_USER_QUERY = "DELETE FROM users WHERE id = ?";
     private static final String UPDATE_QUERY = "UPDATE users SET email = ?, login = ?, name = ?, birthday = ?" +
             " WHERE id = ?";
-    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM friends f WHERE f.idUser = :idUser " +
-            "AND f.idUserFriends = :idUserFriends";
+    private static final String FIND_FRIENDSHIP = "SELECT COUNT(*) FROM friends f WHERE f.user_id = :idUser " +
+            "AND f.user_friends_id = :idUserFriends";
 
     public UserRepository(JdbcTemplate jdbc, RowMapper<User> mapper) {
         super(jdbc, mapper);
@@ -60,7 +60,7 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public void addFriend(long idUser, long friendId) {
-        insert(ADD_FRIEND_QUERY, "idUser", idUser, friendId);
+        insert(ADD_FRIEND_QUERY, "user_id", idUser, friendId);
     }
 
     public void deleteFriends(long idUser, long friendId) {
