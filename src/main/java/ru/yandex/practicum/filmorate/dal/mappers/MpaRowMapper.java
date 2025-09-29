@@ -13,7 +13,7 @@ public class MpaRowMapper implements RowMapper<MotionPictureAssociation> {
     public MotionPictureAssociation mapRow(ResultSet resultSet, int rowNum) throws SQLException {
         MotionPictureAssociation mpa = new MotionPictureAssociation();
         mpa.setId(resultSet.getLong("id"));
-        mpa.setName(resultSet.getString("nameMpa"));
+        mpa.setName(resultSet.getString("name_mpa"));
         return mpa;
     }
 }

@@ -20,7 +20,7 @@ public class MpaRepository extends BaseRepository<MotionPictureAssociation> {
 
     private static final String FIND_ALL_QUERY = "SELECT * FROM mpa_rating";
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM mpa_rating WHERE id = ?";
-    private static final String FIND_ALL_MPA_FOR_ALL_FILMS = "SELECT f.id AS filmId, m.id, m.nameMpa " +
+    private static final String FIND_ALL_MPA_FOR_ALL_FILMS = "SELECT f.id AS filmId, m.id, m.name_mpa " +
         "FROM films f INNER JOIN mpa_rating m ON f.mpa_id = m.id WHERE f.id IN (%s) ORDER BY f.id";
 
     public MpaRepository(JdbcTemplate jdbc, RowMapper<MotionPictureAssociation> mapper) {

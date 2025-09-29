@@ -23,7 +23,7 @@ public class FilmRepository extends BaseRepository<Film> {
             "UPDATE films SET name_film = ?, description = ?, release_date = ?, duration = ?, mpa_id = ? WHERE id = ?";
     private static final String FIND_TOP_FILMS_QUERY =
             "SELECT f.id, f.name_film, f.description, f.release_date, f.duration, f.mpa_id, " +
-                    "mr.nameMpa AS mpa_name " +
+                    "mr.name_mpa AS mpa_name " +
                     "FROM films f " +
                     "LEFT JOIN mpa_rating mr ON f.mpa_id = mr.id " +
                     "LEFT JOIN (SELECT idFilm, COUNT(idUser) AS counter FROM likes GROUP BY idFilm " +
@@ -39,7 +39,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String DELETE_GENRE_QUERY = "DELETE FROM film_genres WHERE idFilm = ? AND idGenre = ?";
     private static final String FIND_COMMON_FILMS = """
             SELECT сf.*
-            FROM (SELECT f.*, mr.nameMpa
+            FROM (SELECT f.*, mr.name_mpa
             	FROM likes l1
             	INNER JOIN films f ON f.id = l1.idFilm
             	LEFT JOIN mpa_rating mr ON f.mpa_id = mr.id
